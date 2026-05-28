@@ -1151,6 +1151,8 @@
     let autoRevealSequenceStarted = false;
     let autoRevealTimers = [];
     const WINNER_REVEAL_HOLD_MS = 4200;
+    const REVEAL_FADE_MS = 430;          // fade-out tra una posizione e l'altra
+    const WINNER_SUSPENSE_MS = 1500;     // pausa extra prima del vincitore (drama)
     let votiRealtimeRefreshTimer = null;
     let refreshingSerata = false;
     let direttaAdminToken = '';
@@ -1880,6 +1882,7 @@
     function animateRevealCard(item, rank, isWinner) {
       const rankOrdinals = ['', '1°', '2°', '3°', '4°', '5°'];
       const direttaIcon = direttaWrap.querySelector('.diretta-icon');
+      // Imposta la scena reveal (idempotente).
       direttaCountdownEl.classList.add('hidden');
       direttaCountdownEl.classList.remove('tick', 'end');
       if (direttaIcon) direttaIcon.style.display = 'none';
@@ -1889,21 +1892,32 @@
       top5RevealActive = true;
       top5RevealOverlay.classList.add('active');
 
-      revealCard.classList.remove('in', 'winner-card');
-      revealRankLabel.classList.remove('in');
-      revealRankLabel.textContent = isWinner ? '🏆 AL PRIMO POSTO' : `AL ${rankOrdinals[rank] || rank + '°'} POSTO`;
-      revealCardRankNum.textContent = isWinner ? '🏆' : String(rank);
-      revealCardName.textContent = item.nome || '';
-      const songLabel = item.artista ? `${item.canzone} — ${item.artista}` : (item.canzone || '');
-      revealCardSong.textContent = songLabel;
-      revealCardPoints.textContent = `${item.scoreTotal} pt · ${item.scoreCount} vot${item.scoreCount === 1 ? 'o' : 'i'}`;
-      if (isWinner) revealCard.classList.add('winner-card');
-      requestAnimationFrame(() => {
+      const populate = () => {
+        revealCard.classList.remove('winner-card');
+        revealRankLabel.textContent = isWinner ? '🏆 AL PRIMO POSTO' : `AL ${rankOrdinals[rank] || rank + '°'} POSTO`;
+        revealCardRankNum.textContent = isWinner ? '🏆' : String(rank);
+        revealCardName.textContent = item.nome || '';
+        const songLabel = item.artista ? `${item.canzone} — ${item.artista}` : (item.canzone || '');
+        revealCardSong.textContent = songLabel;
+        revealCardPoints.textContent = `${item.scoreTotal} pt · ${item.scoreCount} vot${item.scoreCount === 1 ? 'o' : 'i'}`;
+        if (isWinner) revealCard.classList.add('winner-card');
         requestAnimationFrame(() => {
-          revealRankLabel.classList.add('in');
-          revealCard.classList.add('in');
+          requestAnimationFrame(() => {
+            revealRankLabel.classList.add('in');
+            revealCard.classList.add('in');
+          });
         });
-      });
+      };
+      // Se la card è ancora visibile (cambio rapido in manuale), fade-out prima
+      // di ripopolare: evita lo "snap" tra una posizione e l'altra.
+      if (revealCard.classList.contains('in')) {
+        revealCard.classList.remove('in');
+        revealRankLabel.classList.remove('in');
+        const t = setTimeout(populate, REVEAL_FADE_MS);
+        autoRevealTimers.push(t);
+      } else {
+        populate();
+      }
     }
 
     function endRevealAnimation() {
@@ -1956,18 +1970,20 @@
       const startFromRank = Math.max(1, startRank - elapsedSteps);
       const intoStepMs = elapsedMs - elapsedSteps * stepMs;
 
+      // Ogni posizione resta visibile `stepMs - REVEAL_FADE_MS`, poi fade-out
+      // (REVEAL_FADE_MS) e parte la prossima. Prima del vincitore inseriamo una
+      // pausa extra (WINNER_SUSPENSE_MS) per dare suspense, perché altrimenti
+      // l'1° appariva troppo vicino al 2°.
+      const holdMs = Math.max(0, stepMs - REVEAL_FADE_MS);
       const reveal = (rank) => {
         if (!autoRevealSequenceStarted) return;
         const item = top5[rank - 1];
         if (!item) return;
         lastRevealedRank = rank;
         animateRevealCard(item, rank, rank === 1);
-        if (rank > 1) {
-          const t = setTimeout(() => reveal(rank - 1), stepMs);
-          autoRevealTimers.push(t);
-        } else {
-          // Vincitore animato: dopo il hold mostra la classifica finale anche
-          // se il decree dal server non è ancora arrivato (la winner è la stessa).
+        if (rank === 1) {
+          // Vincitore: dopo il hold mostra la classifica finale anche se il
+          // decree dal server non è ancora arrivato (la winner è la stessa).
           const t = setTimeout(() => {
             autoRevealSequenceStarted = false;
             endRevealAnimation();
@@ -1978,7 +1994,19 @@
             renderDirettaAdminControls();
           }, WINNER_REVEAL_HOLD_MS);
           autoRevealTimers.push(t);
+          return;
         }
+        // Posizione non-vincitore: hold, poi fade-out, poi prossima.
+        const tHold = setTimeout(() => {
+          if (!autoRevealSequenceStarted) return;
+          revealCard.classList.remove('in');
+          revealRankLabel.classList.remove('in');
+          const nextIsWinner = (rank - 1) === 1;
+          const gap = REVEAL_FADE_MS + (nextIsWinner ? WINNER_SUSPENSE_MS : 0);
+          const tNext = setTimeout(() => reveal(rank - 1), gap);
+          autoRevealTimers.push(tNext);
+        }, holdMs);
+        autoRevealTimers.push(tHold);
       };
       // Per un join tardivo parti subito dalla posizione corrente; gli step
       // successivi seguono il ritmo normale (stepMs). Il piccolo disallineamento
