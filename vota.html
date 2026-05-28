@@ -1146,6 +1146,8 @@
     let top5RevealActive = false;
     let lastRevealedRank = null;
     let revealWinnerPlaying = false;
+    let autoRevealSequenceStarted = false;
+    let autoRevealTimers = [];
     const WINNER_REVEAL_HOLD_MS = 4200;
     let votiRealtimeRefreshTimer = null;
     let refreshingSerata = false;
@@ -1519,8 +1521,16 @@
       // automatico (rank avanzato dal timer admin) e in manuale (avanzato dal
       // pulsante admin): qui vota anima solo la posizione corrente.
       if (hasCountdown && hasRevealCountdownEnded()) {
-        if (getWinnerRevealSettings().enabled) {
-          syncRevealAnimation();
+        const revealSettings = getWinnerRevealSettings();
+        if (revealSettings.enabled) {
+          // Automatico: server avvia (countdown_ends_at), timer lato client.
+          // Manuale: rank server pilotato dall'admin, vota anima al cambio.
+          if (revealSettings.mode === 'automatic') {
+            startAutomaticReveal();
+          } else {
+            stopAutomaticReveal();
+            syncRevealAnimation();
+          }
           return;
         }
         endRevealAnimation();
@@ -1717,7 +1727,11 @@
       // qui non disegniamo la griglia, ma avviamo/aggiorniamo l'animazione una
       // volta che canzoni e punteggi sono stati caricati.
       if (shouldShowProgressiveReveal()) {
-        syncRevealAnimation();
+        const revealSettings = getWinnerRevealSettings();
+        if (revealSettings.enabled) {
+          if (revealSettings.mode === 'automatic') startAutomaticReveal();
+          else syncRevealAnimation();
+        }
         return;
       }
 
@@ -1858,6 +1872,7 @@
     }
 
     function endRevealAnimation() {
+      stopAutomaticReveal();
       if (top5RevealOverlay) top5RevealOverlay.classList.remove('active');
       const direttaIcon = direttaWrap.querySelector('.diretta-icon');
       if (direttaIcon) direttaIcon.style.display = '';
@@ -1868,6 +1883,73 @@
       top5RevealActive = false;
       lastRevealedRank = null;
       revealWinnerPlaying = false;
+    }
+
+    function stopAutomaticReveal() {
+      autoRevealSequenceStarted = false;
+      autoRevealTimers.forEach(clearTimeout);
+      autoRevealTimers = [];
+    }
+
+    // AUTOMATICO: il server avvia (countdown_ends_at), i timer girano lato
+    // client. Tutti gli schermi sono in sync perché partono dall'ancora comune
+    // `ends_at`: a un join tardivo calcoliamo da quanto tempo è iniziato e
+    // saltiamo agli step già passati.
+    function startAutomaticReveal() {
+      if (autoRevealSequenceStarted) return;
+      const ranking = buildRanking();
+      const startRank = getRevealStartRank(ranking.length);
+      if (!startRank) return;
+      const top5 = ranking.slice(0, startRank);
+      const stepSeconds = Math.max(1, Number(getWinnerRevealSettings().autoStepSeconds) || DEFAULT_WINNER_REVEAL_AUTO_STEP_SECONDS);
+      const stepMs = stepSeconds * 1000;
+      const endsAtMs = getWinnerRevealEndsAtMs(serata) || Date.now();
+      const elapsedMs = Math.max(0, Date.now() - endsAtMs);
+      const totalMs = startRank * stepMs + WINNER_REVEAL_HOLD_MS;
+      if (elapsedMs >= totalMs) {
+        // Sequenza già conclusa per chi si è collegato tardi: vai diretto al final.
+        endRevealAnimation();
+        direttaWrap.style.display = 'none';
+        content.style.display = '';
+        updateFullscreenBtnVisibility(false);
+        renderFinalLeaderboard();
+        renderDirettaAdminControls();
+        return;
+      }
+      autoRevealSequenceStarted = true;
+      const elapsedSteps = Math.floor(elapsedMs / stepMs);
+      const startFromRank = Math.max(1, startRank - elapsedSteps);
+      const intoStepMs = elapsedMs - elapsedSteps * stepMs;
+
+      const reveal = (rank) => {
+        if (!autoRevealSequenceStarted) return;
+        const item = top5[rank - 1];
+        if (!item) return;
+        lastRevealedRank = rank;
+        animateRevealCard(item, rank, rank === 1);
+        if (rank > 1) {
+          const t = setTimeout(() => reveal(rank - 1), stepMs);
+          autoRevealTimers.push(t);
+        } else {
+          // Vincitore animato: dopo il hold mostra la classifica finale anche
+          // se il decree dal server non è ancora arrivato (la winner è la stessa).
+          const t = setTimeout(() => {
+            autoRevealSequenceStarted = false;
+            endRevealAnimation();
+            direttaWrap.style.display = 'none';
+            content.style.display = '';
+            updateFullscreenBtnVisibility(false);
+            renderFinalLeaderboard();
+            renderDirettaAdminControls();
+          }, WINNER_REVEAL_HOLD_MS);
+          autoRevealTimers.push(t);
+        }
+      };
+      // Per un join tardivo parti subito dalla posizione corrente; gli step
+      // successivi seguono il ritmo normale (stepMs). Il piccolo disallineamento
+      // dell'intra-step è accettabile rispetto alla complessità della sync.
+      void intoStepMs;
+      reveal(startFromRank);
     }
 
     // Anima la posizione corrente del reveal in base al rank server. Avanza
@@ -1903,6 +1985,7 @@
         renderDirettaAdminControls();
       };
       if (revealWinnerPlaying) return;
+      stopAutomaticReveal();
       if (top5RevealActive && getWinnerRevealSettings().enabled) {
         const ranking = buildRanking();
         const winner = ranking[0];
