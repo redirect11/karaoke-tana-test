@@ -81,6 +81,13 @@
       _db.auth.signInWithOAuth({ provider: 'facebook', options: { redirectTo: redirectTo } });
     },
 
+    signInWithSpotify: function () {
+      if (!_db) return;
+      var redirectTo = window.location.origin + '/auth-callback.html';
+      localStorage.setItem('auth_redirect', window.location.href);
+      _db.auth.signInWithOAuth({ provider: 'spotify', options: { redirectTo: redirectTo } });
+    },
+
     signOut: function () {
       if (!_db) return;
       _db.auth.signOut();
