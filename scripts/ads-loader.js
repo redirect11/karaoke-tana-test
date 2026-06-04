@@ -1,5 +1,20 @@
 // Il tag Monetag è presente come script statico nell'<head> (#ads-monetag).
 // Questo loader lo rimuove se gli ads sono disabilitati.
+// KT_ADS_BLOCKED: true se l'utente ha una sessione attiva in localStorage.
+// Viene letto sincronicamente dagli script inline nelle pagine.
+window.KT_ADS_BLOCKED = (function () {
+  try {
+    var keys = Object.keys(localStorage);
+    for (var i = 0; i < keys.length; i++) {
+      if (/^sb-.+-auth-token$/.test(keys[i])) {
+        var d = JSON.parse(localStorage.getItem(keys[i]) || 'null');
+        if (d && d.access_token) return true;
+      }
+    }
+  } catch (_) {}
+  return false;
+})();
+
 (function () {
   function removeAdTag() {
     var tag = document.getElementById('ads-monetag');
@@ -29,9 +44,11 @@
     document.head.appendChild(s);
   }
 
-  // Controlla il consenso al caricamento della pagina
+  // Controlla il consenso al caricamento della pagina (skip se utente loggato)
   function checkPushConsent() {
-    try { if (localStorage.getItem('kt_push_consent') === '1') loadPushScript(); } catch (_) {}
+    try {
+      if (localStorage.getItem('kt_push_consent') === '1' && !window.KT_ADS_BLOCKED) loadPushScript();
+    } catch (_) {}
   }
 
   window.loadAds = checkAndMaybeDisable;
