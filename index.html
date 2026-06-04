@@ -1571,6 +1571,10 @@
         <label for="nome">Il tuo nome</label>
         <input id="nome" type="text" placeholder="Es. Mario" maxlength="80" required />
       </div>
+      <div class="form-group">
+        <label for="email">Email <span style="color:var(--muted);font-weight:400;font-size:0.8rem;">(opzionale · salta la pubblicità)</span></label>
+        <input id="email" type="email" placeholder="Es. mario@gmail.com" maxlength="254" autocomplete="email" inputmode="email" />
+      </div>
       <div class="row">
         <div class="form-group">
           <label for="canzone">Canzone</label>
@@ -3892,13 +3896,16 @@
       const nome    = document.getElementById('nome').value.trim();
       const canzone = document.getElementById('canzone').value.trim();
       const artista = document.getElementById('artista').value.trim();
+      const emailRaw = (document.getElementById('email')?.value || '').trim().toLowerCase();
+      const emailValid = emailRaw && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailRaw);
 
       if (!nome || !canzone || !artista) {
         alert('Compila tutti i campi prima di prenotare!');
         return;
       }
 
-      const canProceedWithBooking = await bookingGate.requestConfirmation(adsPolicyStore.getPolicy());
+      // Se l'email è valida salta il gate pubblicitario, altrimenti mostralo
+      const canProceedWithBooking = emailValid || await bookingGate.requestConfirmation(adsPolicyStore.getPolicy());
       if (!canProceedWithBooking) return;
 
       const btn = e.target.querySelector('.btn-submit');
@@ -3907,6 +3914,7 @@
       if (isTelegram) tg.MainButton.showProgress(false);
 
       const booking = { nome, canzone, artista };
+      if (emailValid) booking.email = emailRaw;
       if (currentSerataId) booking.serata_id = currentSerataId;
       try {
         booking.recaptcha_token = await new Promise((resolve, reject) => {

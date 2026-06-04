@@ -5,6 +5,7 @@ type BookingPayload = {
   nome: string;
   canzone: string;
   artista: string;
+  email?: string | null;
   serata_id?: number | null;
   selfie_url?: string | null;
   recaptcha_token?: string | null;
@@ -88,6 +89,21 @@ function validatePayload(payload: unknown): { ok: true; data: BookingPayload } |
     parsedSerataId = normalizedSerataId;
   }
 
+  // email è opzionale: se presente deve essere un indirizzo valido, max 254 caratteri
+  const email_raw = typeof (body as Record<string, unknown>).email === "string"
+    ? ((body as Record<string, unknown>).email as string).trim().toLowerCase()
+    : null;
+  let email: string | null = null;
+  if (email_raw) {
+    if (email_raw.length > 254) {
+      return { ok: false, message: "L'indirizzo email supera la lunghezza massima consentita." };
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email_raw)) {
+      return { ok: false, message: "Indirizzo email non valido." };
+    }
+    email = email_raw;
+  }
+
   // selfie_url è opzionale: deve essere una stringa HTTP/HTTPS o null
   const selfie_url_raw = typeof (body as Record<string, unknown>).selfie_url === 'string'
     ? ((body as Record<string, unknown>).selfie_url as string).trim()
@@ -102,6 +118,7 @@ function validatePayload(payload: unknown): { ok: true; data: BookingPayload } |
       nome,
       canzone,
       artista,
+      email,
       serata_id: parsedSerataId,
       selfie_url,
     },
@@ -307,6 +324,7 @@ serve(async (req) => {
     canzone: validated.data.canzone,
     artista: validated.data.artista,
     approvata: false,
+    ...(validated.data.email ? { email: validated.data.email } : {}),
     ...(validated.data.selfie_url ? { selfie_url: validated.data.selfie_url } : {}),
   };
 
