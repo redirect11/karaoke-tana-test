@@ -54,18 +54,10 @@
       _db.auth.getSession().then(function (result) {
         var session = result.data && result.data.session;
         _user = session ? session.user : null;
-        if (_user) {
-          upsertProfile(_user);
-          if (window.KaraokeAds) KaraokeAds.disableForUser();
-        } else {
-          if (window.KaraokeAds) KaraokeAds.initForAnonymous();
-        }
+        if (_user) upsertProfile(_user);
         updateNavUI(_user);
         notifyListeners(_user);
-      }).catch(function () {
-        // Se la sessione non è verificabile, carica le ads per sicurezza
-        if (window.KaraokeAds) KaraokeAds.initForAnonymous();
-      });
+      }).catch(function () {});
 
       _db.auth.onAuthStateChange(function (_event, session) {
         _user = session ? session.user : null;
