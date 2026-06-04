@@ -1935,6 +1935,49 @@
       return Math.min(parsed, 60);
     })();
 
+    // ── Monetag Vignette – SDK programmatico ───────────────
+    // Il loader viene iniettato solo quando serve (lazy), non a page load.
+    const MONETAG_VIGNETTE_ZONE = 11100804;
+    let _vignetteLoaded = false;
+
+    function _loadVignetteScript() {
+      return new Promise((resolve) => {
+        if (_vignetteLoaded) { resolve(); return; }
+        const s = document.createElement('script');
+        s.dataset.zone = String(MONETAG_VIGNETTE_ZONE);
+        s.src = 'https://n6wxm.com/vignette.min.js';
+        s.onload  = () => { _vignetteLoaded = true; resolve(); };
+        s.onerror = () => resolve(); // fallback silenzioso
+        document.body.appendChild(s);
+      });
+    }
+
+    async function showVignetteAd() {
+      try {
+        await _loadVignetteScript();
+        const showFn = window['show_' + MONETAG_VIGNETTE_ZONE];
+        if (typeof showFn === 'function') await showFn();
+      } catch (_) { /* fallback: procedi comunque */ }
+      return true;
+    }
+
+    // ── Email localStorage (TTL 7 giorni) ──────────────────
+    const EMAIL_LS_KEY = 'kt_email';
+    const EMAIL_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+    function saveEmailLocally(email) {
+      try { localStorage.setItem(EMAIL_LS_KEY, JSON.stringify({ v: email, t: Date.now() })); } catch (_) {}
+    }
+    function loadEmailLocally() {
+      try {
+        const raw = localStorage.getItem(EMAIL_LS_KEY);
+        if (!raw) return '';
+        const { v, t } = JSON.parse(raw);
+        if (!v || Date.now() - t > EMAIL_TTL_MS) { localStorage.removeItem(EMAIL_LS_KEY); return ''; }
+        return v;
+      } catch (_) { return ''; }
+    }
+
     let currentSerataId = null;
     let songListChannel = null;
     let usingLegacySongFallback = false;
@@ -3717,6 +3760,8 @@
         const nomeEl = document.getElementById('nome');
         if (nomeEl && !nomeEl.value) nomeEl.value = tgUser.first_name;
       }
+      const emailEl = document.getElementById('email');
+      if (emailEl && !emailEl.value) emailEl.value = loadEmailLocally();
       if (isTelegram) { tg.MainButton.show(); tg.BackButton.show(); }
       showSongListCard(true);
       showLeaderboard(false);
@@ -3886,27 +3931,22 @@
         }
       }
 
-      // Popunder: si riattiva ogni 60 secondi
-      var puLast = Number(sessionStorage.getItem('pu_last') || 0);
-      if (Date.now() - puLast > 60000) {
-        sessionStorage.setItem('pu_last', String(Date.now()));
-        var pu = window.open('https://omg10.com/4/11096193', '_blank');
-        if (pu) { pu.blur(); window.focus(); }
-      }
       const nome    = document.getElementById('nome').value.trim();
       const canzone = document.getElementById('canzone').value.trim();
       const artista = document.getElementById('artista').value.trim();
       const emailRaw = (document.getElementById('email')?.value || '').trim().toLowerCase();
-      const emailValid = emailRaw && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailRaw);
+      const emailValid = !!emailRaw && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailRaw);
 
       if (!nome || !canzone || !artista) {
         alert('Compila tutti i campi prima di prenotare!');
         return;
       }
 
-      // Se l'email è valida salta il gate pubblicitario, altrimenti mostralo
-      const canProceedWithBooking = emailValid || await bookingGate.requestConfirmation(adsPolicyStore.getPolicy());
-      if (!canProceedWithBooking) return;
+      // Mostra la vignette Monetag solo se: email assente + ads abilitati
+      const _adsPolicy = adsPolicyStore.getPolicy();
+      if (!emailValid && _adsPolicy?.requireBeforeBooking) {
+        await showVignetteAd();
+      }
 
       const btn = e.target.querySelector('.btn-submit');
       btn.disabled = true;
@@ -3914,7 +3954,10 @@
       if (isTelegram) tg.MainButton.showProgress(false);
 
       const booking = { nome, canzone, artista };
-      if (emailValid) booking.email = emailRaw;
+      if (emailValid) {
+        booking.email = emailRaw;
+        saveEmailLocally(emailRaw);
+      }
       if (currentSerataId) booking.serata_id = currentSerataId;
       try {
         booking.recaptcha_token = await new Promise((resolve, reject) => {
