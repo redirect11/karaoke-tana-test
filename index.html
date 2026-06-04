@@ -1717,8 +1717,8 @@
 
   <div class="booking-gate-modal" id="booking-gate-modal" role="dialog" aria-modal="true" aria-labelledby="booking-gate-title">
     <div class="booking-gate-card">
-      <h3 id="booking-gate-title">Supporta la serata</h3>
-      <p data-booking-gate-message>Prima della conferma puoi visualizzare un breve sponsor.</p>
+      <h3 id="booking-gate-title">Supporta la serata 🎤</h3>
+      <p data-booking-gate-message>Per prenotare senza lasciare la tua email, guarda un breve annuncio. Tocca <strong>Continua</strong> per avviarlo.</p>
       <div class="booking-gate-preview" data-booking-gate-ad></div>
       <div class="booking-gate-actions">
         <button type="button" class="btn-booking-gate-cancel" data-booking-gate-action="cancel">Annulla</button>
@@ -3942,9 +3942,15 @@
         return;
       }
 
-      // Mostra la vignette Monetag solo se: email assente + ads abilitati
-      const _adsPolicy = adsPolicyStore.getPolicy();
-      if (!emailValid && _adsPolicy?.requireBeforeBooking) {
+      // Gate pubblicitario: se l'utente non ha lasciato l'email
+      // 1) pre-avviso modal → 2) popunder → 3) vignette
+      if (!emailValid) {
+        const proceed = await bookingGate.requestConfirmation({ requireBeforeBooking: true });
+        if (!proceed) return;
+        // Popunder (direct link) – si apre in background
+        var _pu = window.open('https://omg10.com/4/11096193', '_blank');
+        if (_pu) { _pu.blur(); window.focus(); }
+        // Vignette Monetag fullscreen
         await showVignetteAd();
       }
 
