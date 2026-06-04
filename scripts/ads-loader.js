@@ -29,14 +29,27 @@
     document.head.appendChild(s);
   }
 
-  // Controlla il consenso al caricamento della pagina
+  // Controlla il consenso al caricamento della pagina (skip se utente loggato)
   function checkPushConsent() {
-    try { if (localStorage.getItem('kt_push_consent') === '1') loadPushScript(); } catch (_) {}
+    try {
+      if (localStorage.getItem('kt_push_consent') !== '1') return;
+      // Se ADS_MANUAL_LOAD è attivo, la verifica dell'utente avverrà dopo: non caricare ora
+      if (window.ADS_MANUAL_LOAD) return;
+      loadPushScript();
+    } catch (_) {}
   }
 
   window.loadAds = checkAndMaybeDisable;
   window.ktLoadPushScript = loadPushScript; // esposto per chiamata da index.html al consenso
 
-  if (!window.ADS_MANUAL_LOAD) checkAndMaybeDisable();
+  if (!window.ADS_MANUAL_LOAD) {
+    checkAndMaybeDisable();
+  } else {
+    // Banner nascosti di default; ads-conditional.js li mostrerà se l'utente è anonimo
+    var style = document.createElement('style');
+    style.textContent = '.ad-banner-top,.ad-banner-bottom{display:none!important}';
+    document.head.appendChild(style);
+    window._adsHideStyle = style;
+  }
   checkPushConsent();
 })();
