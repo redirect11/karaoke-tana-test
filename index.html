@@ -1744,7 +1744,42 @@
   </div>
   -->
 
-  <!-- ad-inline-box disabilitato -->
+  <div id="ad-inline-box" style="width:100%;max-width:440px;margin:21px auto -7px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+    <button id="ad-inline-toggle" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.06);border:none;border-bottom:1px solid rgba(255,255,255,0.08);padding:9px 14px;cursor:pointer;color:var(--muted);font-size:0.75rem;font-family:inherit;letter-spacing:0.04em;text-transform:uppercase;">
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span id="ad-inline-arrow" style="display:inline-block;font-size:0.65rem;transition:transform 0.2s;line-height:1;">▶</span>
+        <span>Pubblicità</span>
+      </span>
+      <span id="ad-inline-label" style="font-size:0.72rem;text-transform:none;letter-spacing:0;">Chiudi</span>
+    </button>
+    <div id="ad-inline-content" style="background:transparent;">
+      <div style="display:flex;justify-content:center;align-items:center;padding:10px 0;">
+        <div style="max-width:360px;width:100%;overflow:hidden;">
+          <script async="async" data-cfasync="false" src="https://pl29630919.effectivecpmnetwork.com/1eab9b3c3dae40475ba3c2379f1fa922/invoke.js"></script>
+          <div id="container-1eab9b3c3dae40475ba3c2379f1fa922"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var toggle  = document.getElementById('ad-inline-toggle');
+      var content = document.getElementById('ad-inline-content');
+      var label   = document.getElementById('ad-inline-label');
+      var arrow   = document.getElementById('ad-inline-arrow');
+      if (!toggle) return;
+      var open = sessionStorage.getItem('ad_inline_open') !== '0';
+      function setState(o) {
+        open = o;
+        content.style.display = o ? '' : 'none';
+        label.textContent = o ? 'Chiudi' : 'Apri';
+        arrow.style.transform = o ? 'rotate(90deg)' : 'rotate(0deg)';
+        sessionStorage.setItem('ad_inline_open', o ? '1' : '0');
+      }
+      setState(open);
+      toggle.addEventListener('click', function(){ setState(!open); });
+    })();
+  </script>
 
   <div class="selfie-lightbox" id="selfie-lightbox" role="dialog" aria-modal="true" aria-label="Visualizza selfie">
     <button type="button" class="selfie-lightbox-close" id="selfie-lightbox-close" aria-label="Chiudi">×</button>
