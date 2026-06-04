@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="shortcut icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <meta name="referrer" content="no-referrer-when-downgrade" />
+  <meta name="9b14e37d6787d300c27d1d50c9e612ecb359e51f" content="9b14e37d6787d300c27d1d50c9e612ecb359e51f" />
+  <!-- Google tag (gtag.js) --><script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9K2JEB1P"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-0L9K2JEB1P');</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classifiche – Karaoke La Tana del Coniglio · Nola</title>
+  <meta name="description" content="Classifica dei migliori cantanti del karaoke de La Tana del Coniglio di Nola. Voti ricevuti, punteggio medio e serate partecipate." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.ilkaraokedellatana.it/classifica.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="it_IT" />
+  <meta property="og:title" content="Classifiche – Karaoke La Tana del Coniglio, Nola" />
+  <meta property="og:description" content="I migliori cantanti del karaoke del giovedì sera a Nola." />
+  <meta property="og:image" content="https://www.ilkaraokedellatana.it/kar_night_and_logo.png" />
+  <meta property="og:url" content="https://www.ilkaraokedellatana.it/classifica.html" />
+  <script src="config.js"></script>
+  <script src="scripts/ads-loader.js"></script>
+  <script defer src="scripts/test-banner.js"></script>
+  <style>
+    :root {
+      --bg:        #12071f;
+      --bg2:       #1e0f35;
+      --card:      #2a1650;
+      --gold:      #d4a017;
+      --gold-soft: #f0c94a;
+      --text:      #f0e6d3;
+      --muted:     #a08ca0;
+      --radius:    14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; padding: 0 0 64px;
+    }
+    .page-hero {
+      width: 100%; position: relative;
+      height: clamp(220px, 38vw, 340px); overflow: hidden;
+    }
+    .page-hero-img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center 30%; display: block;
+      filter: brightness(0.6) saturate(0.9);
+    }
+    .page-hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(18,7,31,0.15) 0%, rgba(18,7,31,0.72) 100%);
+    }
+    .page-hero-content {
+      position: absolute; bottom: 28px; left: 0; right: 0;
+      text-align: center; padding: 0 16px;
+    }
+    .page-hero-content .logo { font-size: 2.2rem; line-height: 1; margin-bottom: 6px; }
+    .page-hero-content h1 {
+      font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 800; color: #fff;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.6); letter-spacing: 0.02em; margin-bottom: 4px;
+    }
+    .page-hero-content p.sub {
+      font-size: 0.84rem; color: rgba(255,255,255,0.75);
+      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+    }
+    .page-body { width: 100%; max-width: 680px; margin: 0 auto; padding: 0 16px; }
+    .content {
+      width: 100%; background: var(--card); border-radius: var(--radius);
+      padding: 28px 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    h2 { font-size: 1.05rem; color: var(--gold-soft); margin: 0 0 16px; }
+    p { font-size: 0.88rem; color: var(--text); margin-bottom: 12px; }
+    a { color: var(--gold-soft); text-decoration: underline; }
+
+    /* ── Tabs ── */
+    .tabs { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+    .tab-btn {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px; color: var(--muted); font-size: 0.82rem; font-weight: 600;
+      padding: 6px 14px; cursor: pointer; transition: background 0.15s, color 0.15s;
+      font-family: inherit;
+    }
+    .tab-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+    .tab-btn.active { background: rgba(212,160,23,0.18); border-color: rgba(212,160,23,0.4); color: var(--gold-soft); }
+
+    /* ── Ranking cards ── */
+    .ranking-list { display: flex; flex-direction: column; gap: 10px; }
+    .rank-card {
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(212,160,23,0.15);
+      border-radius: 10px; padding: 12px 16px;
+    }
+    .rank-card:nth-child(1) { border-color: rgba(212,160,23,0.5); background: rgba(212,160,23,0.08); }
+    .rank-card:nth-child(2) { border-color: rgba(192,192,192,0.4); }
+    .rank-card:nth-child(3) { border-color: rgba(176,105,37,0.4); }
+    .rank-pos {
+      font-size: 1.1rem; font-weight: 800; color: var(--muted);
+      min-width: 28px; text-align: center;
+    }
+    .rank-card:nth-child(1) .rank-pos { color: var(--gold-soft); }
+    .rank-avatar {
+      width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+      border: 2px solid rgba(212,160,23,0.3); flex-shrink: 0;
+      background: rgba(255,255,255,0.08);
+    }
+    .rank-avatar-placeholder {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-name { font-size: 0.92rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-meta { font-size: 0.76rem; color: var(--muted); margin-top: 2px; }
+    .rank-score {
+      text-align: right; flex-shrink: 0;
+    }
+    .rank-score-val { font-size: 1.15rem; font-weight: 800; color: var(--gold-soft); }
+    .rank-score-label { font-size: 0.7rem; color: var(--muted); }
+    .rank-stars { font-size: 0.78rem; color: var(--gold); margin-top: 1px; }
+
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: var(--muted); font-size: 0.88rem;
+    }
+    .empty-state .emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+    .cta-login {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 20px;
+      padding: 10px 18px; background: rgba(212,160,23,0.15);
+      border: 1px solid rgba(212,160,23,0.35); border-radius: 999px;
+      color: var(--gold-soft); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .cta-login:hover { background: rgba(212,160,23,0.25); }
+
+    /* ── Hamburger menu ── */
+    .hamburger-btn {
+      position: fixed; top: 14px; left: 14px; z-index: 1001;
+      background: rgba(42,22,80,0.92); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px; width: 40px; height: 40px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      gap: 5px; cursor: pointer; padding: 0;
+    }
+    .hamburger-btn span { display: block; width: 20px; height: 2px; background: var(--text); border-radius: 2px; }
+    .nav-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+    .nav-overlay.open { opacity: 1; pointer-events: all; }
+    .nav-drawer {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+      background: linear-gradient(160deg, #1e0f35 0%, #12071f 100%);
+      border-right: 1px solid rgba(255,255,255,0.1); z-index: 1000;
+      transform: translateX(-100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+      padding: 64px 0 24px; display: flex; flex-direction: column;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+    }
+    .nav-drawer.open { transform: translateX(0); }
+    .nav-drawer-title { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; padding: 0 20px 12px; }
+    .nav-drawer a { display: flex; align-items: center; gap: 10px; padding: 13px 20px; color: var(--text); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: background 0.15s; border-left: 3px solid transparent; }
+    .nav-drawer a:hover { background: rgba(255,255,255,0.06); }
+    .nav-drawer a.active { border-left-color: var(--gold); color: var(--gold-soft); }
+    .nav-drawer-sep { height: 1px; background: rgba(255,255,255,0.07); margin: 8px 20px; }
+    #nav-login-btns { display:flex; flex-direction:column; gap:6px; padding:10px 20px 4px; }
+    #nav-login-btns button { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:9px 14px; color:var(--text); font-size:0.88rem; font-weight:500; cursor:pointer; text-align:left; transition:background 0.15s; font-family:inherit; width:100%; }
+    #nav-login-btns button:hover { background:rgba(255,255,255,0.13); }
+    #nav-user-info { display:none; flex-direction:row; align-items:center; gap:10px; padding:10px 20px; }
+    #nav-user-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid rgba(212,160,23,0.4); flex-shrink:0; }
+    #nav-user-name { flex:1; font-size:0.88rem; color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #nav-signout-btn { background:none; border:none; color:var(--muted); font-size:0.78rem; cursor:pointer; padding:2px 6px; border-radius:4px; transition:color 0.15s; font-family:inherit; flex-shrink:0; }
+    #nav-signout-btn:hover { color:var(--text); }
+
+    footer { margin-top: 40px; margin-bottom: 24px; font-size: 0.72rem; color: #3d2366; text-align: center; }
+    .ad-banner-top, .ad-banner-bottom { display:flex; justify-content:center; align-items:center; width:100%; max-width:322px; margin-left:auto; margin-right:auto; overflow:hidden; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:1px; }
+    .ad-banner-top { margin-bottom: 24px; }
+    .ad-banner-bottom { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-overlay" id="nav-overlay"></div>
+  <nav class="nav-drawer" id="nav-drawer">
+    <div class="nav-drawer-title">Navigazione</div>
+    <a href="index.html">🏠 Home</a>
+    <a href="chi-siamo.html">👥 Chi siamo</a>
+    <a href="contatti.html">📬 Contatti</a>
+    <a href="archive.html" id="nav-archive-link">🏆 Archivio karaoke</a>
+    <a href="classifica.html" class="active">🏅 Classifiche</a>
+    <div class="nav-drawer-sep"></div>
+    <a href="vota.html" id="nav-vota-link">🗳️ Vota</a>
+    <a href="cookie-policy.html">🍪 Cookie Policy</a>
+    <div class="nav-drawer-sep"></div>
+    <div id="nav-login-btns">
+      <button onclick="window.KaraokeAuth && KaraokeAuth.signInWithGoogle()">🔵 Accedi con Google</button>
+      <button onclick="window.KaraokeAuth && KaraokeAuth.signInWithFacebook()">📘 Accedi con Facebook</button>
+    </div>
+    <div id="nav-user-info">
+      <img id="nav-user-avatar" src="" alt="" />
+      <span id="nav-user-name"></span>
+      <button id="nav-signout-btn" onclick="window.KaraokeAuth && KaraokeAuth.signOut()">Esci</button>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <img src="il_karaoke.png" alt="Classifica karaoke La Tana del Coniglio" class="page-hero-img" />
+    <div class="page-hero-overlay"></div>
+    <div class="page-hero-content">
+      <div class="logo">🏅</div>
+      <h1>Classifiche</h1>
+      <p class="sub">I migliori cantanti del karaoke · La Tana del Coniglio</p>
+    </div>
+  </div>
+
+  <div class="page-body">
+  <div class="ad-banner-top" style="margin:16px auto;">
+    <script>atOptions={'key':'0b2dec717b137030d01a6e9ac6e0481b','format':'iframe','height':50,'width':320,'params':{}};</script>
+    <script src="https://www.highperformanceformat.com/0b2dec717b137030d01a6e9ac6e0481b/invoke.js"></script>
+  </div>
+
+  <div class="content">
+    <h2>Top cantanti</h2>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-period="all">Tutti i tempi</button>
+      <button class="tab-btn" data-period="month">Questo mese</button>
+      <button class="tab-btn" data-period="week">Questa settimana</button>
+    </div>
+
+    <div class="ranking-list" id="ranking-list">
+      <div class="empty-state">
+        <span class="emoji">🎤</span>
+        Caricamento classifica…
+      </div>
+    </div>
+
+    <div id="cta-login-section" style="text-align:center;margin-top:28px;display:none;">
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:12px;">Accedi per vedere la tua posizione in classifica e tenere traccia delle tue esibizioni.</p>
+      <button class="cta-login" onclick="window.KaraokeAuth && KaraokeAuth.signInWithGoogle()">🔵 Accedi con Google</button>
+      <button class="cta-login" style="margin-left:8px;" onclick="window.KaraokeAuth && KaraokeAuth.signInWithFacebook()">📘 Accedi con Facebook</button>
+    </div>
+
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;margin-top:28px;padding:10px 18px;background:rgba(212,160,23,0.15);border:1px solid rgba(212,160,23,0.35);border-radius:999px;color:var(--gold-soft);text-decoration:none;font-size:0.88rem;font-weight:600;">← Torna alla home</a>
+  </div>
+  </div>
+
+  <footer>
+    <a href="https://www.google.com/maps/search/?api=1&query=Corso+Tommaso+Vitale+87,+80035+Nola+NA" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">La Tana del Coniglio · Corso Tommaso Vitale 87, 80035 – Nola</a>
+    &nbsp;|&nbsp; <a href="cookie-policy.html" style="color:inherit;text-decoration:underline;">Cookie Policy</a>
+    &nbsp;|&nbsp; <a href="index.html" style="color:inherit;text-decoration:underline;">Home</a>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="scripts/auth-social.js"></script>
+  <script>
+    var config = window.CONFIG || {};
+    var supabaseReady = config.SUPABASE_URL && !config.SUPABASE_URL.includes('TUO-PROGETTO');
+    var db = supabaseReady
+      ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY, { auth: { persistSession: true, storage: localStorage } })
+      : null;
+    if (db && window.KaraokeAuth) KaraokeAuth.init(db);
+
+    // Verifica archivio abilitato
+    var al = document.getElementById('nav-archive-link');
+    if (al && db) {
+      db.from('impostazioni_pubbliche').select('archivio_pubblico_abilitato').eq('id', 1).maybeSingle()
+        .then(function(r) { if (r.data && r.data.archivio_pubblico_abilitato !== true) al.style.display = 'none'; })
+        .catch(function() {});
+    }
+
+    var currentPeriod = 'all';
+
+    function starsHtml(score) {
+      if (!score) return '';
+      var full = Math.round(score);
+      var s = '';
+      for (var i = 1; i <= 5; i++) s += i <= full ? '★' : '☆';
+      return s;
+    }
+
+    async function loadRanking(period) {
+      var listEl = document.getElementById('ranking-list');
+      listEl.innerHTML = '<div class="empty-state"><span class="emoji">⏳</span>Caricamento…</div>';
+      if (!db) {
+        listEl.innerHTML = '<div class="empty-state"><span class="emoji">⚠️</span>Servizio non disponibile.</div>';
+        return;
+      }
+
+      try {
+        var query = db.from('classifica_utenti').select('*').order('avg_score', { ascending: false }).limit(50);
+
+        if (period === 'week' || period === 'month') {
+          var now = new Date();
+          var from;
+          if (period === 'week') {
+            var day = now.getDay() || 7;
+            from = new Date(now);
+            from.setDate(now.getDate() - day + 1);
+            from.setHours(0, 0, 0, 0);
+          } else {
+            from = new Date(now.getFullYear(), now.getMonth(), 1);
+          }
+          // Per il filtro temporale usiamo una query diversa sulle prenotazioni
+          // La view classifica_utenti non filtra per data, quindi carichiamo manualmente
+          var bookingsRes = await db
+            .from('prenotazioni')
+            .select('id, user_id, serata_id')
+            .not('user_id', 'is', null)
+            .gte('created_at', from.toISOString());
+
+          var bookingIds = (bookingsRes.data || []).map(function(b) { return b.id; });
+          if (!bookingIds.length) {
+            listEl.innerHTML = '<div class="empty-state"><span class="emoji">🎤</span>Nessuna esibizione nel periodo selezionato.</div>';
+            return;
+          }
+
+          var votiRes = await db
+            .from('voti')
+            .select('prenotazione_id, voto')
+            .in('prenotazione_id', bookingIds);
+
+          var votiMap = {};
+          (votiRes.data || []).forEach(function(v) {
+            var bid = v.prenotazione_id;
+            if (!votiMap[bid]) votiMap[bid] = [];
+            votiMap[bid].push(v.voto);
+          });
+
+          var userStats = {};
+          (bookingsRes.data || []).forEach(function(b) {
+            var uid = b.user_id;
+            if (!uid) return;
+            if (!userStats[uid]) userStats[uid] = { total_votes: 0, sum: 0, serate: new Set(), canzoni: 0 };
+            var votes = votiMap[b.id] || [];
+            userStats[uid].total_votes += votes.length;
+            userStats[uid].sum += votes.reduce(function(a, x) { return a + x; }, 0);
+            userStats[uid].serate.add(b.serata_id);
+            userStats[uid].canzoni++;
+          });
+
+          var userIds = Object.keys(userStats);
+          if (!userIds.length) {
+            listEl.innerHTML = '<div class="empty-state"><span class="emoji">🎤</span>Nessuna esibizione nel periodo selezionato.</div>';
+            return;
+          }
+
+          var profilesRes = await db.from('profiles').select('id, display_name, avatar_url').in('id', userIds);
+          var profileMap = {};
+          (profilesRes.data || []).forEach(function(p) { profileMap[p.id] = p; });
+
+          var rows = userIds.map(function(uid) {
+            var stats = userStats[uid];
+            var prof = profileMap[uid] || {};
+            return {
+              user_id: uid,
+              display_name: prof.display_name || 'Utente',
+              avatar_url: prof.avatar_url || null,
+              total_votes: stats.total_votes,
+              avg_score: stats.total_votes > 0 ? Math.round((stats.sum / stats.total_votes) * 100) / 100 : 0,
+              serate_partecipate: stats.serate.size,
+              canzoni_cantate: stats.canzoni,
+            };
+          }).filter(function(r) { return r.total_votes > 0; })
+            .sort(function(a, b) { return b.avg_score - a.avg_score || b.total_votes - a.total_votes; });
+
+          renderRanking(rows, listEl);
+          return;
+        }
+
+        var res = await query;
+        renderRanking(res.data || [], listEl);
+      } catch (err) {
+        listEl.innerHTML = '<div class="empty-state"><span class="emoji">⚠️</span>Errore nel caricamento. Riprova più tardi.</div>';
+      }
+    }
+
+    function renderRanking(rows, listEl) {
+      if (!rows.length) {
+        listEl.innerHTML = '<div class="empty-state"><span class="emoji">🎤</span>Ancora nessuna esibizione con profilo registrato.<br><br>Accedi per apparire in classifica!</div>';
+        document.getElementById('cta-login-section').style.display = window.KaraokeAuth && !KaraokeAuth.getUser() ? 'block' : 'none';
+        return;
+      }
+      document.getElementById('cta-login-section').style.display = 'none';
+
+      var medals = ['🥇', '🥈', '🥉'];
+      listEl.innerHTML = rows.map(function(row, i) {
+        var avatarHtml = row.avatar_url
+          ? '<img class="rank-avatar" src="' + row.avatar_url + '" alt="" />'
+          : '<div class="rank-avatar-placeholder">🎤</div>';
+        var pos = medals[i] || '#' + (i + 1);
+        var score = row.avg_score ? row.avg_score.toFixed(1) : '—';
+        var meta = row.serate_partecipate + ' ' + (row.serate_partecipate === 1 ? 'serata' : 'serate') +
+                   ' · ' + row.total_votes + ' ' + (row.total_votes === 1 ? 'voto' : 'voti');
+        return '<div class="rank-card">' +
+          '<div class="rank-pos">' + pos + '</div>' +
+          avatarHtml +
+          '<div class="rank-info">' +
+            '<div class="rank-name">' + escHtml(row.display_name || 'Utente') + '</div>' +
+            '<div class="rank-meta">' + meta + '</div>' +
+          '</div>' +
+          '<div class="rank-score">' +
+            '<div class="rank-score-val">' + score + '</div>' +
+            '<div class="rank-stars">' + starsHtml(row.avg_score) + '</div>' +
+            '<div class="rank-score-label">media</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentPeriod = btn.dataset.period;
+        loadRanking(currentPeriod);
+      });
+    });
+
+    if (window.KaraokeAuth) {
+      KaraokeAuth.onUserChange(function() {
+        loadRanking(currentPeriod);
+      });
+    }
+
+    loadRanking(currentPeriod);
+
+    // Hamburger nav
+    var btn = document.getElementById('hamburger-btn');
+    var overlay = document.getElementById('nav-overlay');
+    var drawer = document.getElementById('nav-drawer');
+    function openMenu() { drawer.classList.add('open'); overlay.classList.add('open'); }
+    function closeMenu() { drawer.classList.remove('open'); overlay.classList.remove('open'); }
+    btn.addEventListener('click', function() { drawer.classList.contains('open') ? closeMenu() : openMenu(); });
+    overlay.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMenu(); });
+  </script>
+</body>
+</html>

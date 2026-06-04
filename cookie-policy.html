@@ -130,6 +130,14 @@
     .nav-drawer a:hover { background:rgba(255,255,255,0.06); }
     .nav-drawer a.active { border-left-color:#d4a017; color:#f0c94a; }
     .nav-drawer-sep { height:1px; background:rgba(255,255,255,0.07); margin:8px 20px; }
+    #nav-login-btns { display:flex; flex-direction:column; gap:6px; padding:10px 20px 4px; }
+    #nav-login-btns button { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:9px 14px; color:#f0e6d3; font-size:0.88rem; font-weight:500; cursor:pointer; text-align:left; transition:background 0.15s; font-family:inherit; width:100%; }
+    #nav-login-btns button:hover { background:rgba(255,255,255,0.13); }
+    #nav-user-info { display:none; flex-direction:row; align-items:center; gap:10px; padding:10px 20px; }
+    #nav-user-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid rgba(212,160,23,0.4); flex-shrink:0; }
+    #nav-user-name { flex:1; font-size:0.88rem; color:#f0e6d3; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #nav-signout-btn { background:none; border:none; color:#a08ca0; font-size:0.78rem; cursor:pointer; padding:2px 6px; border-radius:4px; transition:color 0.15s; font-family:inherit; flex-shrink:0; }
+    #nav-signout-btn:hover { color:#f0e6d3; }
   </style>
 </head>
 <body>
@@ -141,9 +149,20 @@
     <a href="chi-siamo.html">👥 Chi siamo</a>
     <a href="contatti.html">📬 Contatti</a>
     <a href="archive.html" id="nav-archive-link">🏆 Archivio karaoke</a>
+    <a href="classifica.html">🏅 Classifiche</a>
     <div class="nav-drawer-sep"></div>
     <a href="vota.html">🗳️ Vota</a>
     <a href="cookie-policy.html" class="active">🍪 Cookie Policy</a>
+    <div class="nav-drawer-sep"></div>
+    <div id="nav-login-btns">
+      <button onclick="window.KaraokeAuth && KaraokeAuth.signInWithGoogle()">🔵 Accedi con Google</button>
+      <button onclick="window.KaraokeAuth && KaraokeAuth.signInWithFacebook()">📘 Accedi con Facebook</button>
+    </div>
+    <div id="nav-user-info">
+      <img id="nav-user-avatar" src="" alt="" />
+      <span id="nav-user-name"></span>
+      <button id="nav-signout-btn" onclick="window.KaraokeAuth && KaraokeAuth.signOut()">Esci</button>
+    </div>
     <div id="nav-test-toggle" style="display:none;padding:10px 20px;align-items:center;justify-content:space-between;gap:8px;">
       <span style="font-size:0.85rem;color:#a08ca0;">Banner di test</span>
       <button id="nav-test-btn" onclick="(function(){var on=localStorage.getItem('kt_test_banner_visible')!=='0';if(window.ktTestBannerSetVisible)window.ktTestBannerSetVisible(!on);document.getElementById('nav-test-btn').textContent=!on?'ON':'OFF';document.getElementById('nav-test-btn').style.background=!on?'#2fc66c':'rgba(255,255,255,0.12)';})()" style="border:none;border-radius:999px;padding:4px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:background 0.15s;"></button>
@@ -258,6 +277,16 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="scripts/auth-social.js"></script>
+  <script>
+    (function() {
+      var cfg = window.CONFIG || {};
+      if (cfg.SUPABASE_URL && !cfg.SUPABASE_URL.includes('TUO-PROGETTO') && window.KaraokeAuth) {
+        var _db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { persistSession: true, storage: localStorage } });
+        KaraokeAuth.init(_db);
+      }
+    })();
+  </script>
   <script src="scripts/maintenance-mode.js"></script>
   <script defer src="scripts/test-banner.js"></script>
   <script>

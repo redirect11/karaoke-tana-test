@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <meta name="referrer" content="no-referrer-when-downgrade" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Accesso in corso… – La Tana del Coniglio</title>
+  <script src="config.js"></script>
+  <style>
+    :root { --bg: #12071f; --gold-soft: #f0c94a; --muted: #a08ca0; --text: #f0e6d3; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px; padding: 24px;
+    }
+    .logo { font-size: 3rem; }
+    p { font-size: 0.9rem; color: var(--muted); text-align: center; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(240,201,74,0.2);
+      border-top-color: var(--gold-soft);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="logo">🐰🎤</div>
+  <div class="spinner"></div>
+  <p id="status-msg">Completamento accesso…</p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    (async function () {
+      var config = window.CONFIG || {};
+      if (!config.SUPABASE_URL || !config.SUPABASE_ANON_KEY) {
+        document.getElementById('status-msg').textContent = 'Configurazione mancante.';
+        return;
+      }
+
+      var db = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY, {
+        auth: { persistSession: true, storage: localStorage },
+      });
+
+      try {
+        // Scambia il code dalla URL con una sessione
+        var result = await db.auth.exchangeCodeForSession(window.location.href);
+        var session = result.data && result.data.session;
+        var user = session && session.user;
+
+        if (user) {
+          // Crea/aggiorna profilo
+          var meta = user.user_metadata || {};
+          var provider = (user.app_metadata && user.app_metadata.provider) || null;
+          await db.from('profiles').upsert({
+            id:           user.id,
+            display_name: meta.full_name || meta.name || meta.user_name || null,
+            avatar_url:   meta.avatar_url || meta.picture || null,
+            provider:     provider,
+            updated_at:   new Date().toISOString(),
+          }, { onConflict: 'id' });
+        }
+      } catch (_) {}
+
+      // Redirige alla pagina di provenienza o alla home
+      var redirect = localStorage.getItem('auth_redirect') || 'index.html';
+      localStorage.removeItem('auth_redirect');
+      window.location.replace(redirect);
+    })();
+  </script>
+</body>
+</html>

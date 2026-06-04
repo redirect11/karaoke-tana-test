@@ -108,26 +108,28 @@ function validatePayload(payload: unknown): { ok: true; data: BookingPayload } |
   };
 }
 
-async function validateUserToken(req: Request): Promise<{ ok: true } | { ok: false }> {
+async function validateUserToken(req: Request): Promise<{ ok: true; userId: string | null } | { ok: false }> {
   const requireAuth = (Deno.env.get("REQUIRE_AUTH") ?? "false").toLowerCase() === "true";
-  if (!requireAuth) return { ok: true };
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!supabaseUrl || !supabaseAnonKey) return { ok: false };
 
   const authHeader = req.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) return { ok: false };
+  if (authHeader.startsWith("Bearer ") && supabaseUrl && supabaseAnonKey) {
+    const token = authHeader.slice("Bearer ".length).trim();
+    if (token) {
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data, error } = await authClient.auth.getUser();
+      if (!error && data.user) {
+        return { ok: true, userId: data.user.id };
+      }
+    }
+  }
 
-  const token = authHeader.slice("Bearer ".length).trim();
-  if (!token) return { ok: false };
-
-  const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data, error } = await authClient.auth.getUser();
-  if (error || !data.user) return { ok: false };
-  return { ok: true };
+  if (requireAuth) return { ok: false };
+  return { ok: true, userId: null };
 }
 
 async function getOpenSerata(admin: ReturnType<typeof createClient>) {
@@ -308,6 +310,7 @@ serve(async (req) => {
     artista: validated.data.artista,
     approvata: false,
     ...(validated.data.selfie_url ? { selfie_url: validated.data.selfie_url } : {}),
+    ...(authCheck.userId ? { user_id: authCheck.userId } : {}),
   };
 
   const openSerata = await getOpenSerata(admin);
