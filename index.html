@@ -1264,10 +1264,8 @@
       line-height: 1.5;
     }
     .booking-gate-preview {
+      width: 100%;
       min-height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     .booking-gate-actions {
       display: flex;
@@ -1589,6 +1587,10 @@
         <label for="nome">Il tuo nome</label>
         <input id="nome" type="text" placeholder="Es. Mario" maxlength="80" required />
       </div>
+      <div class="form-group">
+        <label for="email">Email <span style="color:var(--muted);font-weight:400;font-size:0.8rem;">(opzionale · salta la pubblicità)</span></label>
+        <input id="email" type="email" placeholder="Es. mario@gmail.com" maxlength="254" autocomplete="email" inputmode="email" />
+      </div>
       <div class="row">
         <div class="form-group">
           <label for="canzone">Canzone</label>
@@ -1731,11 +1733,10 @@
     </div>
   </div>
 
-  <!-- booking-gate-modal disabilitato
   <div class="booking-gate-modal" id="booking-gate-modal" role="dialog" aria-modal="true" aria-labelledby="booking-gate-title">
     <div class="booking-gate-card">
-      <h3 id="booking-gate-title">Supporta la serata</h3>
-      <p data-booking-gate-message>Prima della conferma puoi visualizzare un breve sponsor.</p>
+      <h3 id="booking-gate-title">Supporta la serata 🎤</h3>
+      <p data-booking-gate-message>Per prenotare senza la tua email, guarda un breve annuncio.</p>
       <div class="booking-gate-preview" data-booking-gate-ad></div>
       <div class="booking-gate-actions">
         <button type="button" class="btn-booking-gate-cancel" data-booking-gate-action="cancel">Annulla</button>
@@ -1743,7 +1744,6 @@
       </div>
     </div>
   </div>
-  -->
 
   <!-- ad-inline-box disabilitato -->
 
@@ -1811,7 +1811,7 @@
   <script defer src="scripts/test-banner.js"></script>
   <!-- <script src="./scripts/ads-config.js"></script> -->
   <!-- <script src="./scripts/ads-banner.js"></script> -->
-  <!-- <script src="./scripts/booking-gate.js"></script> -->
+  <script src="./scripts/booking-gate.js"></script>
   <script src="./scripts/karaoke-utils.js"></script>
   <script src="./scripts/karaoke-state.js"></script>
   <script>
@@ -1938,8 +1938,96 @@
       } catch (_) { return ''; }
     }
 
-    // ── VAST / Google IMA SDK – disabilitato ───────────────
-    function renderVastAdContent(container) { /* no-op */ }
+    // ── VAST / Google IMA SDK ───────────────────────────────
+    const VAST_AD_TAG = 'https://butterygrandmother.com/d/muF.zUdKGzN/vDZ/GqUW/Vemm/9/u/ZEUBlykAPpTTckx/M/Dvgiz_OpDyEBtgNwzSELwgOdD/Mo4TN/Qx';
+    const VAST_MIN_WATCH_SEC = 8;
+    let _imaLoaded = false;
+
+    function _loadImaScript() {
+      return new Promise((resolve, reject) => {
+        if (_imaLoaded || (window.google && window.google.ima)) { _imaLoaded = true; resolve(); return; }
+        const s = document.createElement('script');
+        s.src = 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
+        s.onload = () => { _imaLoaded = true; resolve(); };
+        s.onerror = () => reject(new Error('IMA load error'));
+        document.head.appendChild(s);
+      });
+    }
+
+    function renderVastAdContent(container) {
+      container.innerHTML = '';
+
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden;';
+
+      const videoEl = document.createElement('video');
+      videoEl.style.cssText = 'width:100%;height:100%;display:block;';
+      videoEl.muted = true;
+      videoEl.setAttribute('playsinline', '');
+
+      const countdownEl = document.createElement('div');
+      countdownEl.style.cssText = 'position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,.65);color:#fff;font-size:.7rem;padding:2px 7px;border-radius:4px;pointer-events:none;';
+      countdownEl.textContent = 'Caricamento…';
+
+      wrap.appendChild(videoEl);
+      wrap.appendChild(countdownEl);
+      container.appendChild(wrap);
+
+      const modal = container.closest('[role="dialog"]');
+      const continueBtn = modal ? modal.querySelector('[data-booking-gate-action="continue"]') : null;
+      if (continueBtn) continueBtn.disabled = true;
+
+      function unlock() {
+        if (continueBtn) continueBtn.disabled = false;
+        countdownEl.textContent = '✓';
+      }
+
+      _loadImaScript().then(() => {
+        const ima = window.google.ima;
+        const adDisplayContainer = new ima.AdDisplayContainer(wrap, videoEl);
+        adDisplayContainer.initialize();
+
+        const adsLoader = new ima.AdsLoader(adDisplayContainer);
+
+        adsLoader.addEventListener(ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, (evt) => {
+          const adsManager = evt.getAdsManager(videoEl);
+          let watchedSec = 0;
+          let ticker = null;
+
+          adsManager.addEventListener(ima.AdEvent.Type.STARTED, () => {
+            ticker = setInterval(() => {
+              watchedSec++;
+              const left = Math.max(0, VAST_MIN_WATCH_SEC - watchedSec);
+              if (left > 0) {
+                countdownEl.textContent = left + 's';
+              } else {
+                clearInterval(ticker);
+                unlock();
+              }
+            }, 1000);
+          });
+
+          adsManager.addEventListener(ima.AdEvent.Type.COMPLETE, () => { clearInterval(ticker); unlock(); });
+          adsManager.addEventListener(ima.AdEvent.Type.ALL_ADS_COMPLETED, () => { clearInterval(ticker); unlock(); });
+          adsManager.addEventListener(ima.AdErrorEvent.Type.AD_ERROR, () => { clearInterval(ticker); unlock(); countdownEl.textContent = ''; });
+
+          try {
+            const w = wrap.offsetWidth || 320;
+            const h = Math.round(w * 9 / 16) || 180;
+            adsManager.init(w, h, ima.ViewMode.NORMAL);
+            adsManager.start();
+          } catch (_) { unlock(); }
+        });
+
+        adsLoader.addEventListener(ima.AdErrorEvent.Type.AD_ERROR, () => { unlock(); countdownEl.textContent = ''; });
+
+        const req = new ima.AdsRequest();
+        req.adTagUrl = VAST_AD_TAG;
+        req.linearAdSlotWidth = 320;
+        req.linearAdSlotHeight = 180;
+        adsLoader.requestAds(req);
+      }).catch(() => { unlock(); container.innerHTML = ''; });
+    }
     let currentSerataId = null;
     let songListChannel = null;
     let usingLegacySongFallback = false;
@@ -2092,11 +2180,7 @@
     const bookingGate = window.KaraokeBookingGate
       ? window.KaraokeBookingGate.createBookingGate({
         modalEl: bookingGateModalEl,
-        renderAdContent: (container, policy) => {
-          if (window.KaraokeAdsBanner) {
-            window.KaraokeAdsBanner.renderInlineAd(container, policy);
-          }
-        },
+        renderAdContent: (container) => renderVastAdContent(container),
       })
       : { requestConfirmation: async () => true };
 
@@ -3722,6 +3806,8 @@
         const nomeEl = document.getElementById('nome');
         if (nomeEl && !nomeEl.value) nomeEl.value = tgUser.first_name;
       }
+      const emailEl = document.getElementById('email');
+      if (emailEl && !emailEl.value) emailEl.value = loadEmailLocally();
       if (isTelegram) { tg.MainButton.show(); tg.BackButton.show(); }
       showSongListCard(true);
       showLeaderboard(false);
@@ -3891,17 +3977,22 @@
         }
       }
 
-      // Popunder – disabilitato
       const nome    = document.getElementById('nome').value.trim();
       const canzone = document.getElementById('canzone').value.trim();
       const artista = document.getElementById('artista').value.trim();
+      const emailRaw = (document.getElementById('email')?.value || '').trim().toLowerCase();
+      const emailValid = !!emailRaw && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailRaw);
 
       if (!nome || !canzone || !artista) {
         alert('Compila tutti i campi prima di prenotare!');
         return;
       }
 
-      // Gate pubblicitario – disabilitato
+      // Gate pubblicitario: se l'utente non lascia l'email, guarda un breve video
+      if (!emailValid) {
+        const proceed = await bookingGate.requestConfirmation({ requireBeforeBooking: true });
+        if (!proceed) return;
+      }
 
       const btn = e.target.querySelector('.btn-submit');
       btn.disabled = true;
@@ -3909,6 +4000,10 @@
       if (isTelegram) tg.MainButton.showProgress(false);
 
       const booking = { nome, canzone, artista };
+      if (emailValid) {
+        booking.email = emailRaw;
+        saveEmailLocally(emailRaw);
+      }
       if (currentSerataId) booking.serata_id = currentSerataId;
       try {
         booking.recaptcha_token = await new Promise((resolve, reject) => {

@@ -2342,6 +2342,130 @@ async function executeAction(admin: ReturnType<typeof createClient>, action: str
       };
     }
 
+    case "get_stats": {
+      // Total prenotazioni
+      const { count: totalBookings, error: errTot } = await admin
+        .from("prenotazioni")
+        .select("id", { count: "exact", head: true });
+      if (errTot) throw new ApiError(500, "query_failed", "Errore conteggio prenotazioni.");
+
+      // Total serate (all)
+      const { count: totalSerate, error: errSer } = await admin
+        .from("serate")
+        .select("id", { count: "exact", head: true });
+      if (errSer) throw new ApiError(500, "query_failed", "Errore conteggio serate.");
+
+      // Total canzoni cantate
+      const { count: totalCantate, error: errCan } = await admin
+        .from("prenotazioni")
+        .select("id", { count: "exact", head: true })
+        .eq("cantata", true);
+      if (errCan) throw new ApiError(500, "query_failed", "Errore conteggio cantate.");
+
+      // Emails – aggregate in code to deduplicate case-insensitively
+      const { data: emailRows, error: errEmail } = await admin
+        .from("prenotazioni")
+        .select("email")
+        .not("email", "is", null)
+        .neq("email", "");
+      if (errEmail) throw new ApiError(500, "query_failed", "Errore caricamento email.");
+
+      const emailMap = new Map<string, number>();
+      for (const row of emailRows ?? []) {
+        if (!row.email) continue;
+        const norm = (row.email as string).toLowerCase().trim();
+        if (!norm) continue;
+        emailMap.set(norm, (emailMap.get(norm) ?? 0) + 1);
+      }
+      const emails = [...emailMap.entries()]
+        .map(([email, count]) => ({ email, count }))
+        .sort((a, b) => b.count - a.count || a.email.localeCompare(b.email));
+
+      // Last 12 closed serate + booking counts (2 queries instead of N+1)
+      const { data: serateData, error: errSerData } = await admin
+        .from("serate")
+        .select("id, data, created_at")
+        .eq("aperta", false)
+        .order("data", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(12);
+      if (errSerData) throw new ApiError(500, "query_failed", "Errore caricamento serate.");
+
+      const serataIds = (serateData ?? [])
+        .map((s) => Number(s.id))
+        .filter((n) => Number.isInteger(n) && n > 0);
+
+      const { data: serataBookings, error: errSerBook } = serataIds.length > 0
+        ? await admin
+          .from("prenotazioni")
+          .select("serata_id, cantata")
+          .in("serata_id", serataIds)
+        : { data: [], error: null };
+      if (errSerBook) throw new ApiError(500, "query_failed", "Errore caricamento prenotazioni per serata.");
+
+      const serataCountMap = new Map<number, { total: number; cantate: number }>();
+      for (const row of serataBookings ?? []) {
+        const sid = Number(row.serata_id);
+        if (!serataCountMap.has(sid)) serataCountMap.set(sid, { total: 0, cantate: 0 });
+        serataCountMap.get(sid)!.total++;
+        if (row.cantata) serataCountMap.get(sid)!.cantate++;
+      }
+
+      const perSerata = (serateData ?? [])
+        .map((s) => {
+          const sid = Number(s.id);
+          const counts = serataCountMap.get(sid) ?? { total: 0, cantate: 0 };
+          return {
+            serata_id: sid,
+            data: s.data || getArchiveDate(s as Record<string, unknown>),
+            total: counts.total,
+            cantate: counts.cantate,
+          };
+        })
+        .reverse();
+
+      // Top songs and artists – aggregate in code
+      const { data: allBookings, error: errAll } = await admin
+        .from("prenotazioni")
+        .select("canzone, artista");
+      if (errAll) throw new ApiError(500, "query_failed", "Errore caricamento canzoni.");
+
+      const songMap = new Map<string, { canzone: string; artista: string; count: number }>();
+      const artistMap = new Map<string, { artista: string; count: number }>();
+
+      for (const row of allBookings ?? []) {
+        const canz = ((row.canzone as string) ?? "").trim();
+        const art = ((row.artista as string) ?? "").trim();
+        const songKey = `${canz.toLowerCase()}|||${art.toLowerCase()}`;
+        const artistKey = art.toLowerCase();
+        if (!songMap.has(songKey)) songMap.set(songKey, { canzone: canz, artista: art, count: 0 });
+        songMap.get(songKey)!.count++;
+        if (!artistMap.has(artistKey)) artistMap.set(artistKey, { artista: art, count: 0 });
+        artistMap.get(artistKey)!.count++;
+      }
+
+      const topSongs = [...songMap.values()]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+      const topArtists = [...artistMap.values()]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      return {
+        status: 200,
+        data: {
+          totale_prenotazioni: totalBookings ?? 0,
+          totale_serate: totalSerate ?? 0,
+          totale_cantate: totalCantate ?? 0,
+          totale_email: emails.length,
+          emails,
+          per_serata: perSerata,
+          top_songs: topSongs,
+          top_artists: topArtists,
+        },
+      };
+    }
+
     default:
       throw new ApiError(400, "invalid_action", "Azione admin non supportata.");
   }
