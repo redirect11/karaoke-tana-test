@@ -2005,12 +2005,26 @@
       container.appendChild(wrap);
 
       if (mode === 'entrambi') {
-        const skipEl = document.createElement('p');
-        skipEl.style.cssText = 'margin:6px 0 0;font-size:0.72rem;color:var(--muted);text-align:center;';
-        skipEl.innerHTML = 'Oppure <a href="https://affectionatestorage.com/GZPILD" target="_blank" rel="noopener" id="vast-skip-link" style="color:var(--gold);text-decoration:underline;">visita questo link</a> per saltare il video.';
-        container.appendChild(skipEl);
-        const skipLink = skipEl.querySelector('#vast-skip-link');
-        if (skipLink) skipLink.addEventListener('click', () => unlock());
+        const skipWrap = document.createElement('div');
+        skipWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:10px;';
+
+        const skipInstr = document.createElement('p');
+        skipInstr.style.cssText = 'margin:0;font-size:0.78rem;color:var(--muted);text-align:center;line-height:1.5;';
+        skipInstr.textContent = 'Oppure visita il link qui sotto per saltare il video. Aspetta che si apra la pagina, poi torna qui: il tasto Continua si abiliterà.';
+
+        const skipBtn = document.createElement('a');
+        skipBtn.href = 'https://affectionatestorage.com/GZPILD';
+        skipBtn.target = '_blank';
+        skipBtn.rel = 'noopener';
+        skipBtn.id = 'vast-skip-link';
+        skipBtn.textContent = 'Salta il video';
+        skipBtn.style.cssText = 'display:inline-block;padding:8px 20px;background:var(--gold,#d4a017);color:#000;font-weight:700;font-size:0.88rem;border-radius:6px;text-decoration:none;';
+
+        skipWrap.appendChild(skipInstr);
+        skipWrap.appendChild(skipBtn);
+        container.appendChild(skipWrap);
+
+        skipBtn.addEventListener('click', () => unlock());
       }
 
       if (continueBtn) { continueBtn.disabled = true; continueBtn.textContent = 'Caricamento…'; }
