@@ -1289,6 +1289,10 @@
       background: var(--gold);
       color: #12071f;
     }
+    .btn-booking-gate-continue:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
 
     .ad-banner-top, .ad-banner-bottom {
       display: flex; justify-content: center; align-items: center;
@@ -1962,7 +1966,7 @@
 
       const modal = container.closest('[role="dialog"]');
       const continueBtn = modal ? modal.querySelector('[data-booking-gate-action="continue"]') : null;
-      if (continueBtn) continueBtn.disabled = true;
+      if (continueBtn) { continueBtn.disabled = true; continueBtn.textContent = 'Caricamento…'; }
 
       let _unlocked = false;
       const _fallback = setTimeout(() => unlock(), 30000);
@@ -1971,8 +1975,15 @@
         if (_unlocked) return;
         _unlocked = true;
         clearTimeout(_fallback);
-        if (continueBtn) continueBtn.disabled = false;
-        countdownEl.textContent = '✓';
+        countdownEl.textContent = '';
+        if (continueBtn) { continueBtn.disabled = false; continueBtn.textContent = 'Continua'; }
+      }
+
+      function setCountdown(sec) {
+        if (_unlocked) return;
+        const label = sec > 0 ? 'Continua (' + sec + 's)' : 'Continua';
+        countdownEl.textContent = sec > 0 ? sec + 's' : '';
+        if (continueBtn) continueBtn.textContent = label;
       }
 
       fetch(VAST_AD_TAG)
@@ -1995,14 +2006,11 @@
 
           // Countdown basato sulla durata reale del video
           videoEl.addEventListener('loadedmetadata', () => {
-            if (isFinite(videoEl.duration)) {
-              countdownEl.textContent = Math.ceil(videoEl.duration) + 's';
-            }
+            if (isFinite(videoEl.duration)) setCountdown(Math.ceil(videoEl.duration));
           });
           videoEl.addEventListener('timeupdate', () => {
             if (!isFinite(videoEl.duration)) return;
-            const left = Math.ceil(videoEl.duration - videoEl.currentTime);
-            countdownEl.textContent = left > 0 ? left + 's' : '✓';
+            setCountdown(Math.ceil(videoEl.duration - videoEl.currentTime));
           });
           videoEl.addEventListener('ended', unlock);
           videoEl.addEventListener('error', unlock);
