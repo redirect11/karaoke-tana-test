@@ -681,6 +681,9 @@ async function updatePublicSettings(
     winner_reveal_animation_enabled?: boolean;
     winner_reveal_animation_mode?: "manual" | "automatic";
     winner_reveal_auto_step_seconds?: number;
+    email_campo_abilitato?: boolean;
+    email_gate_abilitato?: boolean;
+    email_gate_modalita?: "video" | "link" | "entrambi";
   },
 ) {
   await getPublicSettings(admin);
@@ -725,6 +728,15 @@ async function updatePublicSettings(
   }
   if (Number.isInteger(updates.winner_reveal_auto_step_seconds)) {
     payload.winner_reveal_auto_step_seconds = updates.winner_reveal_auto_step_seconds;
+  }
+  if (typeof updates.email_campo_abilitato === "boolean") {
+    payload.email_campo_abilitato = updates.email_campo_abilitato;
+  }
+  if (typeof updates.email_gate_abilitato === "boolean") {
+    payload.email_gate_abilitato = updates.email_gate_abilitato;
+  }
+  if (typeof updates.email_gate_modalita === "string") {
+    payload.email_gate_modalita = updates.email_gate_modalita;
   }
   const { data, error } = await admin
     .from("impostazioni_pubbliche")
@@ -857,6 +869,9 @@ async function executeAction(admin: ReturnType<typeof createClient>, action: str
         winner_reveal_animation_enabled?: boolean;
         winner_reveal_animation_mode?: "manual" | "automatic";
         winner_reveal_auto_step_seconds?: number;
+        email_campo_abilitato?: boolean;
+        email_gate_abilitato?: boolean;
+        email_gate_modalita?: "video" | "link" | "entrambi";
       } = {};
       if (typeof body.archivioPubblicoAbilitato === "boolean") {
         updates.archivio_pubblico_abilitato = body.archivioPubblicoAbilitato;
@@ -930,6 +945,15 @@ async function executeAction(admin: ReturnType<typeof createClient>, action: str
       if (Object.prototype.hasOwnProperty.call(body, "winnerRevealAutoStepSeconds")) {
         updates.winner_reveal_auto_step_seconds = parseRevealAutoStepSeconds(body.winnerRevealAutoStepSeconds);
       }
+      if (typeof body.emailCampoAbilitato === "boolean") {
+        updates.email_campo_abilitato = body.emailCampoAbilitato;
+      }
+      if (typeof body.emailGateAbilitato === "boolean") {
+        updates.email_gate_abilitato = body.emailGateAbilitato;
+      }
+      if (typeof body.emailGateModalita === "string" && ["video", "link", "entrambi"].includes(body.emailGateModalita)) {
+        updates.email_gate_modalita = body.emailGateModalita as "video" | "link" | "entrambi";
+      }
       if (
         typeof updates.archivio_pubblico_abilitato !== "boolean"
         && typeof updates.manutenzione_abilitata !== "boolean"
@@ -955,11 +979,14 @@ async function executeAction(admin: ReturnType<typeof createClient>, action: str
         && typeof updates.winner_reveal_animation_enabled !== "boolean"
         && typeof updates.winner_reveal_animation_mode !== "string"
         && !Number.isInteger(updates.winner_reveal_auto_step_seconds)
+        && typeof updates.email_campo_abilitato !== "boolean"
+        && typeof updates.email_gate_abilitato !== "boolean"
+        && typeof updates.email_gate_modalita !== "string"
       ) {
         throw new ApiError(
           400,
           "invalid_payload",
-          "Specifica almeno archivioPubblicoAbilitato, modalitaPostApprovazione, homeSubtitleEnabled, homeSubtitleText, homeFollowTitle, homeFollowMessage, homeFormTitle, homeFormMessage, homeSuccessTitle, homeSuccessMessage, homeWaitingTitle, homeWaitingMessage, homeBookingsDisabledTitle, homeBookingsDisabledMessage, homeClosedTitle, homeClosedMessage, homeMaintenanceTitle, homeMaintenanceMessage, prossimaSerataData, winnerRevealCountdownDefaultSeconds, winnerRevealAnimationEnabled, winnerRevealAnimationMode o winnerRevealAutoStepSeconds.",
+          "Specifica almeno archivioPubblicoAbilitato, modalitaPostApprovazione, homeSubtitleEnabled, homeSubtitleText, homeFollowTitle, homeFollowMessage, homeFormTitle, homeFormMessage, homeSuccessTitle, homeSuccessMessage, homeWaitingTitle, homeWaitingMessage, homeBookingsDisabledTitle, homeBookingsDisabledMessage, homeClosedTitle, homeClosedMessage, homeMaintenanceTitle, homeMaintenanceMessage, prossimaSerataData, winnerRevealCountdownDefaultSeconds, winnerRevealAnimationEnabled, winnerRevealAnimationMode, winnerRevealAutoStepSeconds, emailCampoAbilitato, emailGateAbilitato o emailGateModalita.",
         );
       }
       const updatedSettings = await updatePublicSettings(admin, updates);

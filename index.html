@@ -1591,8 +1591,8 @@
         <label for="nome">Il tuo nome</label>
         <input id="nome" type="text" placeholder="Es. Mario" maxlength="80" required />
       </div>
-      <div class="form-group">
-        <label for="email">Email <span style="color:var(--muted);font-weight:400;font-size:0.8rem;">(opzionale · salta la pubblicità)</span></label>
+      <div id="email-campo-wrapper" class="form-group">
+        <label for="email">Email <span id="email-gate-hint" style="color:var(--muted);font-weight:400;font-size:0.8rem;">(opzionale · salta la pubblicità)</span></label>
         <input id="email" type="email" placeholder="Es. mario@gmail.com" maxlength="254" autocomplete="email" inputmode="email" />
       </div>
       <div class="row">
@@ -1945,9 +1945,36 @@
     // ── VAST player (fetch + DOMParser, no SDK) ────────────
     const VAST_AD_TAG = 'https://butterygrandmother.com/d/muF.zUdKGzN/vDZ/GqUW/Vemm/9/u/ZEUBlykAPpTTckx/M/Dvgiz_OpDyEBtgNwzSELwgOdD/Mo4TN/Qx';
 
-    function renderVastAdContent(container) {
+    function renderVastAdContent(container, modalita) {
+      const mode = modalita || 'entrambi';
       container.innerHTML = '';
 
+      const modal = container.closest('[role="dialog"]');
+      const continueBtn = modal ? modal.querySelector('[data-booking-gate-action="continue"]') : null;
+
+      let _unlocked = false;
+      let _fallback = null;
+
+      function unlock() {
+        if (_unlocked) return;
+        _unlocked = true;
+        if (_fallback) clearTimeout(_fallback);
+        if (continueBtn) { continueBtn.disabled = false; continueBtn.textContent = 'Continua'; }
+      }
+
+      if (mode === 'link') {
+        // Solo link — blocca il tasto finché non viene cliccato
+        if (continueBtn) { continueBtn.disabled = true; continueBtn.textContent = 'Continua'; }
+        const linkEl = document.createElement('p');
+        linkEl.style.cssText = 'margin:12px 0;font-size:0.9rem;text-align:center;';
+        linkEl.innerHTML = 'Prima di continuare, <a href="https://affectionatestorage.com/GZPILD" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600;">visita questo link</a> per supportare Karaoke Tana.';
+        container.appendChild(linkEl);
+        const a = linkEl.querySelector('a');
+        if (a) a.addEventListener('click', () => unlock());
+        return;
+      }
+
+      // mode === 'video' oppure 'entrambi'
       const wrap = document.createElement('div');
       wrap.style.cssText = 'position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden;';
 
@@ -1964,29 +1991,24 @@
       wrap.appendChild(countdownEl);
       container.appendChild(wrap);
 
-      const skipEl = document.createElement('p');
-      skipEl.style.cssText = 'margin:6px 0 0;font-size:0.72rem;color:var(--muted);text-align:center;';
-      skipEl.innerHTML = 'Oppure <a href="https://affectionatestorage.com/GZPILD" target="_blank" rel="noopener" id="vast-skip-link" style="color:var(--gold);text-decoration:underline;">visita questo link</a> per saltare il video.';
-      container.appendChild(skipEl);
+      if (mode === 'entrambi') {
+        const skipEl = document.createElement('p');
+        skipEl.style.cssText = 'margin:6px 0 0;font-size:0.72rem;color:var(--muted);text-align:center;';
+        skipEl.innerHTML = 'Oppure <a href="https://affectionatestorage.com/GZPILD" target="_blank" rel="noopener" id="vast-skip-link" style="color:var(--gold);text-decoration:underline;">visita questo link</a> per saltare il video.';
+        container.appendChild(skipEl);
+        const skipLink = skipEl.querySelector('#vast-skip-link');
+        if (skipLink) skipLink.addEventListener('click', () => unlock());
+      }
 
-      const modal = container.closest('[role="dialog"]');
-      const continueBtn = modal ? modal.querySelector('[data-booking-gate-action="continue"]') : null;
       if (continueBtn) { continueBtn.disabled = true; continueBtn.textContent = 'Caricamento…'; }
+      _fallback = setTimeout(() => unlock(), 30000);
 
-      let _unlocked = false;
-      const _fallback = setTimeout(() => unlock(), 30000);
-
-      function unlock() {
+      function unlockVideo() {
         if (_unlocked) return;
         _unlocked = true;
         clearTimeout(_fallback);
         countdownEl.textContent = '';
         if (continueBtn) { continueBtn.disabled = false; continueBtn.textContent = 'Continua'; }
-      }
-
-      const skipLink = container.querySelector('#vast-skip-link');
-      if (skipLink) {
-        skipLink.addEventListener('click', () => { unlock(); });
       }
 
       function setCountdown(sec) {
@@ -2001,20 +2023,17 @@
         .then(xml => {
           const doc = new DOMParser().parseFromString(xml, 'text/xml');
 
-          // Scegli il miglior MediaFile MP4
           const files = [...doc.querySelectorAll('MediaFile')];
           const mp4 = files.find(f => (f.getAttribute('type') || '').includes('mp4')) || files[0];
-          if (!mp4) { unlock(); return; }
+          if (!mp4) { unlockVideo(); return; }
           const url = (mp4.textContent || '').trim();
-          if (!url) { unlock(); return; }
+          if (!url) { unlockVideo(); return; }
 
-          // Impression pixel (best-effort)
           doc.querySelectorAll('Impression').forEach(n => {
             const u = (n.textContent || '').trim();
             if (u) new Image().src = u;
           });
 
-          // Countdown basato sulla durata reale del video
           videoEl.addEventListener('loadedmetadata', () => {
             if (isFinite(videoEl.duration)) setCountdown(Math.ceil(videoEl.duration));
           });
@@ -2022,13 +2041,13 @@
             if (!isFinite(videoEl.duration)) return;
             setCountdown(Math.ceil(videoEl.duration - videoEl.currentTime));
           });
-          videoEl.addEventListener('ended', unlock);
-          videoEl.addEventListener('error', unlock);
+          videoEl.addEventListener('ended', unlockVideo);
+          videoEl.addEventListener('error', unlockVideo);
 
           videoEl.src = url;
-          videoEl.play().catch(unlock);
+          videoEl.play().catch(unlockVideo);
         })
-        .catch(() => { unlock(); container.innerHTML = ''; });
+        .catch(() => { unlockVideo(); container.innerHTML = ''; });
     }
     let currentSerataId = null;
     let songListChannel = null;
@@ -2042,6 +2061,9 @@
       manutenzione_abilitata: false,
       modalita_post_approvazione: 'direct_live',
       prossima_serata_data: null,
+      email_campo_abilitato: true,
+      email_gate_abilitato: true,
+      email_gate_modalita: 'entrambi',
     };
 
     // ── UI refs ─────────────────────────────────────────────
@@ -2182,7 +2204,7 @@
     const bookingGate = window.KaraokeBookingGate
       ? window.KaraokeBookingGate.createBookingGate({
         modalEl: bookingGateModalEl,
-        renderAdContent: (container) => renderVastAdContent(container),
+        renderAdContent: (container) => renderVastAdContent(container, publicSettings?.email_gate_modalita || 'entrambi'),
       })
       : { requestConfirmation: async () => true };
 
@@ -2257,12 +2279,13 @@
       if (!db) return publicSettings;
       const { data, error } = await db
         .from('impostazioni_pubbliche')
-        .select('archivio_pubblico_abilitato, manutenzione_abilitata, modalita_post_approvazione, home_subtitle_enabled, home_subtitle_text, home_follow_title, home_follow_message, home_form_title, home_form_message, home_success_title, home_success_message, home_waiting_title, home_waiting_message, home_bookings_disabled_title, home_bookings_disabled_message, home_closed_title, home_closed_message, home_maintenance_title, home_maintenance_message, prossima_serata_data, winner_reveal_animation_enabled')
+        .select('archivio_pubblico_abilitato, manutenzione_abilitata, modalita_post_approvazione, home_subtitle_enabled, home_subtitle_text, home_follow_title, home_follow_message, home_form_title, home_form_message, home_success_title, home_success_message, home_waiting_title, home_waiting_message, home_bookings_disabled_title, home_bookings_disabled_message, home_closed_title, home_closed_message, home_maintenance_title, home_maintenance_message, prossima_serata_data, winner_reveal_animation_enabled, email_campo_abilitato, email_gate_abilitato, email_gate_modalita')
         .eq('id', 1)
         .maybeSingle();
       if (!error && data) {
         publicSettings = data;
         applyHomeCopy();
+        applyEmailGateSettings();
       }
       return publicSettings;
     }
@@ -2304,6 +2327,15 @@
       if (bookingsDisabledTitleEl) bookingsDisabledTitleEl.textContent = homeCopy.bookingsDisabledTitle || '';
       if (bookingsDisabledMessageEl) bookingsDisabledMessageEl.innerHTML = renderMarkdown(homeCopy.bookingsDisabledMessage || '');
       if (waitingStatusEl) waitingStatusEl.innerHTML = renderMarkdown(homeCopy.waitingMessage || '');
+    }
+
+    function applyEmailGateSettings() {
+      const campoWrapper = document.getElementById('email-campo-wrapper');
+      const gateHint = document.getElementById('email-gate-hint');
+      const campoOn = publicSettings?.email_campo_abilitato !== false;
+      const gateOn = publicSettings?.email_gate_abilitato !== false;
+      if (campoWrapper) campoWrapper.style.display = campoOn ? '' : 'none';
+      if (gateHint) gateHint.style.display = (campoOn && gateOn) ? '' : 'none';
     }
 
     ensurePublicSettingsPolling();
@@ -3990,8 +4022,9 @@
         return;
       }
 
-      // Gate pubblicitario: se l'utente non lascia l'email, guarda un breve video
-      if (!emailValid) {
+      const _gateOn = publicSettings?.email_gate_abilitato !== false;
+      const _campoOn = publicSettings?.email_campo_abilitato !== false;
+      if (_gateOn && !(_campoOn && emailValid)) {
         const proceed = await bookingGate.requestConfirmation({ requireBeforeBooking: true });
         if (!proceed) return;
       }

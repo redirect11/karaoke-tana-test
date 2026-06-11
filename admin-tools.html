@@ -338,6 +338,41 @@
         </div>
 
         <div class="setting-sub-box">
+          <div class="setting-label">Gate pubblicitario (email gate)</div>
+          <p>Mostra un video o un link sponsorizzato prima della conferma della prenotazione.</p>
+          <div class="status-box" id="email-gate-status-box">
+            <strong>Caricamento…</strong>
+          </div>
+          <div class="actions">
+            <button class="action-btn btn-public-settings" id="btn-toggle-email-gate" type="button">—</button>
+          </div>
+        </div>
+
+        <div class="setting-sub-box">
+          <div class="setting-label">Campo email nel form</div>
+          <p>Mostra o nasconde il campo email nel form di prenotazione. Se compilato, salta il gate pubblicitario.</p>
+          <div class="status-box" id="email-campo-status-box">
+            <strong>Caricamento…</strong>
+          </div>
+          <div class="actions">
+            <button class="action-btn btn-public-settings" id="btn-toggle-email-campo" type="button">—</button>
+          </div>
+        </div>
+
+        <div class="setting-sub-box">
+          <label class="setting-label" for="email-gate-modalita-select">Contenuto del gate</label>
+          <p>Cosa mostrare nel gate pubblicitario: solo video, solo link o entrambi.</p>
+          <div class="next-date-controls">
+            <select id="email-gate-modalita-select" class="input-field" style="max-width:200px;">
+              <option value="entrambi">Video + link</option>
+              <option value="video">Solo video</option>
+              <option value="link">Solo link</option>
+            </select>
+            <button class="action-btn btn-public-settings" id="btn-save-email-gate-modalita" type="button">Salva</button>
+          </div>
+        </div>
+
+        <div class="setting-sub-box">
           <label class="setting-label" for="post-approval-mode">Cosa fare dopo approvazione</label>
           <p>
             Decide cosa succede alla canzone corrente subito dopo l'approvazione:
@@ -652,6 +687,9 @@
       winner_reveal_animation_enabled: true,
       winner_reveal_animation_mode: 'automatic',
       winner_reveal_auto_step_seconds: DEFAULT_WINNER_REVEAL_AUTO_STEP_SECONDS,
+      email_campo_abilitato: true,
+      email_gate_abilitato: true,
+      email_gate_modalita: 'entrambi',
     };
 
     document.getElementById('pwd-btn').addEventListener('click', loginAdmin);
@@ -664,6 +702,9 @@
     toggleBrowserNotificationsBtn.addEventListener('click', toggleBrowserNotifications);
     btnToggleArchivePublic.addEventListener('click', toggleArchivePublic);
     btnToggleMaintenanceMode.addEventListener('click', toggleMaintenanceMode);
+    document.getElementById('btn-toggle-email-gate')?.addEventListener('click', toggleEmailGate);
+    document.getElementById('btn-toggle-email-campo')?.addEventListener('click', toggleEmailCampo);
+    document.getElementById('btn-save-email-gate-modalita')?.addEventListener('click', saveEmailGateModalita);
     btnSavePostApprovalMode.addEventListener('click', savePostApprovalMode);
     btnSaveNextDate.addEventListener('click', saveNextKaraokeDate);
     btnClearNextDate.addEventListener('click', clearNextKaraokeDate);
@@ -916,6 +957,21 @@
       homeClosedMessageInput.value = homeCopy.closedMessage || '';
       homeMaintenanceTitleInput.value = homeCopy.maintenanceTitle || '';
       homeMaintenanceMessageInput.value = homeCopy.maintenanceMessage || '';
+
+      const emailGateEnabled = publicSettings?.email_gate_abilitato !== false;
+      const emailGateStatusBox = document.getElementById('email-gate-status-box');
+      const btnToggleEmailGate = document.getElementById('btn-toggle-email-gate');
+      if (emailGateStatusBox) emailGateStatusBox.innerHTML = `<strong>Gate pubblicitario: ${emailGateEnabled ? '🟢 attivo' : '⭕ disattivato'}</strong>`;
+      if (btnToggleEmailGate) btnToggleEmailGate.textContent = emailGateEnabled ? 'Disattiva gate' : 'Attiva gate';
+
+      const emailCampoEnabled = publicSettings?.email_campo_abilitato !== false;
+      const emailCampoStatusBox = document.getElementById('email-campo-status-box');
+      const btnToggleEmailCampo = document.getElementById('btn-toggle-email-campo');
+      if (emailCampoStatusBox) emailCampoStatusBox.innerHTML = `<strong>Campo email: ${emailCampoEnabled ? '🟢 visibile' : '⭕ nascosto'}</strong>`;
+      if (btnToggleEmailCampo) btnToggleEmailCampo.textContent = emailCampoEnabled ? 'Nascondi campo email' : 'Mostra campo email';
+
+      const emailGateModalitaSelect = document.getElementById('email-gate-modalita-select');
+      if (emailGateModalitaSelect) emailGateModalitaSelect.value = publicSettings?.email_gate_modalita || 'entrambi';
     }
 
     function getWinnerRevealCountdownSeconds() {
@@ -972,6 +1028,49 @@
       } finally {
         btnToggleMaintenanceMode.disabled = false;
         renderPublicSettings();
+      }
+    }
+
+    async function toggleEmailGate() {
+      const btn = document.getElementById('btn-toggle-email-gate');
+      const nextValue = !(publicSettings?.email_gate_abilitato !== false);
+      setBusy(btn, true, 'Aggiornamento…');
+      try {
+        publicSettings = await callAdmin('set_public_settings', { emailGateAbilitato: nextValue });
+      } catch (error) {
+        setStatus(error?.message || 'Non sono riuscito ad aggiornare il gate pubblicitario.', true);
+      } finally {
+        if (btn) btn.disabled = false;
+        renderPublicSettings();
+      }
+    }
+
+    async function toggleEmailCampo() {
+      const btn = document.getElementById('btn-toggle-email-campo');
+      const nextValue = !(publicSettings?.email_campo_abilitato !== false);
+      setBusy(btn, true, 'Aggiornamento…');
+      try {
+        publicSettings = await callAdmin('set_public_settings', { emailCampoAbilitato: nextValue });
+      } catch (error) {
+        setStatus(error?.message || 'Non sono riuscito ad aggiornare il campo email.', true);
+      } finally {
+        if (btn) btn.disabled = false;
+        renderPublicSettings();
+      }
+    }
+
+    async function saveEmailGateModalita() {
+      const btn = document.getElementById('btn-save-email-gate-modalita');
+      const select = document.getElementById('email-gate-modalita-select');
+      const value = select?.value || 'entrambi';
+      setBusy(btn, true, 'Salvataggio…');
+      try {
+        publicSettings = await callAdmin('set_public_settings', { emailGateModalita: value });
+        renderPublicSettings();
+      } catch (error) {
+        setStatus(error?.message || 'Non sono riuscito ad aggiornare la modalità del gate.', true);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Salva'; }
       }
     }
 
