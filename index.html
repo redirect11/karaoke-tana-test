@@ -1963,14 +1963,27 @@
       }
 
       if (mode === 'link') {
-        // Solo link — blocca il tasto finché non viene cliccato
         if (continueBtn) { continueBtn.disabled = true; continueBtn.textContent = 'Continua'; }
-        const linkEl = document.createElement('p');
-        linkEl.style.cssText = 'margin:12px 0;font-size:0.9rem;text-align:center;';
-        linkEl.innerHTML = 'Prima di continuare, <a href="https://affectionatestorage.com/GZPILD" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600;">visita questo link</a> per supportare Karaoke Tana.';
-        container.appendChild(linkEl);
-        const a = linkEl.querySelector('a');
-        if (a) a.addEventListener('click', () => unlock());
+
+        const wrapLink = document.createElement('div');
+        wrapLink.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 0 4px;';
+
+        const instrEl = document.createElement('p');
+        instrEl.style.cssText = 'margin:0;font-size:0.82rem;color:var(--muted);text-align:center;line-height:1.5;';
+        instrEl.textContent = 'Visita il link qui sotto per supportare Karaoke Tana. Aspetta che si apra la pagina e poi torna su questa: il tasto Continua si abiliterà e potrai prenotarti.';
+
+        const linkBtn = document.createElement('a');
+        linkBtn.href = 'https://affectionatestorage.com/GZPILD';
+        linkBtn.target = '_blank';
+        linkBtn.rel = 'noopener';
+        linkBtn.textContent = 'Apri il link sponsor';
+        linkBtn.style.cssText = 'display:inline-block;padding:10px 24px;background:var(--gold,#d4a017);color:#000;font-weight:700;font-size:0.95rem;border-radius:6px;text-decoration:none;';
+
+        wrapLink.appendChild(instrEl);
+        wrapLink.appendChild(linkBtn);
+        container.appendChild(wrapLink);
+
+        linkBtn.addEventListener('click', () => unlock());
         return;
       }
 
