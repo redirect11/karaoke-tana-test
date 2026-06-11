@@ -1964,6 +1964,11 @@
       wrap.appendChild(countdownEl);
       container.appendChild(wrap);
 
+      const skipEl = document.createElement('p');
+      skipEl.style.cssText = 'margin:6px 0 0;font-size:0.72rem;color:var(--muted);text-align:center;';
+      skipEl.innerHTML = 'Oppure <a href="https://affectionatestorage.com/GZPILD" target="_blank" rel="noopener" id="vast-skip-link" style="color:var(--gold);text-decoration:underline;">visita questo link</a> per saltare il video.';
+      container.appendChild(skipEl);
+
       const modal = container.closest('[role="dialog"]');
       const continueBtn = modal ? modal.querySelector('[data-booking-gate-action="continue"]') : null;
       if (continueBtn) { continueBtn.disabled = true; continueBtn.textContent = 'Caricamento…'; }
@@ -1977,6 +1982,11 @@
         clearTimeout(_fallback);
         countdownEl.textContent = '';
         if (continueBtn) { continueBtn.disabled = false; continueBtn.textContent = 'Continua'; }
+      }
+
+      const skipLink = container.querySelector('#vast-skip-link');
+      if (skipLink) {
+        skipLink.addEventListener('click', () => { unlock(); });
       }
 
       function setCountdown(sec) {
