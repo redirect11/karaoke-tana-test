@@ -1938,21 +1938,8 @@
       } catch (_) { return ''; }
     }
 
-    // ── VAST / Google IMA SDK ───────────────────────────────
+    // ── VAST player (fetch + DOMParser, no SDK) ────────────
     const VAST_AD_TAG = 'https://butterygrandmother.com/d/muF.zUdKGzN/vDZ/GqUW/Vemm/9/u/ZEUBlykAPpTTckx/M/Dvgiz_OpDyEBtgNwzSELwgOdD/Mo4TN/Qx';
-    const VAST_MIN_WATCH_SEC = 8;
-    let _imaLoaded = false;
-
-    function _loadImaScript() {
-      return new Promise((resolve, reject) => {
-        if (_imaLoaded || (window.google && window.google.ima)) { _imaLoaded = true; resolve(); return; }
-        const s = document.createElement('script');
-        s.src = 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
-        s.onload = () => { _imaLoaded = true; resolve(); };
-        s.onerror = () => reject(new Error('IMA load error'));
-        document.head.appendChild(s);
-      });
-    }
 
     function renderVastAdContent(container) {
       container.innerHTML = '';
@@ -1961,7 +1948,7 @@
       wrap.style.cssText = 'position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden;';
 
       const videoEl = document.createElement('video');
-      videoEl.style.cssText = 'width:100%;height:100%;display:block;';
+      videoEl.style.cssText = 'width:100%;height:100%;display:block;object-fit:contain;';
       videoEl.muted = true;
       videoEl.setAttribute('playsinline', '');
 
@@ -1977,56 +1964,53 @@
       const continueBtn = modal ? modal.querySelector('[data-booking-gate-action="continue"]') : null;
       if (continueBtn) continueBtn.disabled = true;
 
+      let _unlocked = false;
+      const _fallback = setTimeout(() => unlock(), 30000);
+
       function unlock() {
+        if (_unlocked) return;
+        _unlocked = true;
+        clearTimeout(_fallback);
         if (continueBtn) continueBtn.disabled = false;
         countdownEl.textContent = '✓';
       }
 
-      _loadImaScript().then(() => {
-        const ima = window.google.ima;
-        const adDisplayContainer = new ima.AdDisplayContainer(wrap, videoEl);
-        adDisplayContainer.initialize();
+      fetch(VAST_AD_TAG)
+        .then(r => r.text())
+        .then(xml => {
+          const doc = new DOMParser().parseFromString(xml, 'text/xml');
 
-        const adsLoader = new ima.AdsLoader(adDisplayContainer);
+          // Scegli il miglior MediaFile MP4
+          const files = [...doc.querySelectorAll('MediaFile')];
+          const mp4 = files.find(f => (f.getAttribute('type') || '').includes('mp4')) || files[0];
+          if (!mp4) { unlock(); return; }
+          const url = (mp4.textContent || '').trim();
+          if (!url) { unlock(); return; }
 
-        adsLoader.addEventListener(ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, (evt) => {
-          const adsManager = evt.getAdsManager(videoEl);
-          let watchedSec = 0;
-          let ticker = null;
-
-          adsManager.addEventListener(ima.AdEvent.Type.STARTED, () => {
-            ticker = setInterval(() => {
-              watchedSec++;
-              const left = Math.max(0, VAST_MIN_WATCH_SEC - watchedSec);
-              if (left > 0) {
-                countdownEl.textContent = left + 's';
-              } else {
-                clearInterval(ticker);
-                unlock();
-              }
-            }, 1000);
+          // Impression pixel (best-effort)
+          doc.querySelectorAll('Impression').forEach(n => {
+            const u = (n.textContent || '').trim();
+            if (u) new Image().src = u;
           });
 
-          adsManager.addEventListener(ima.AdEvent.Type.COMPLETE, () => { clearInterval(ticker); unlock(); });
-          adsManager.addEventListener(ima.AdEvent.Type.ALL_ADS_COMPLETED, () => { clearInterval(ticker); unlock(); });
-          adsManager.addEventListener(ima.AdErrorEvent.Type.AD_ERROR, () => { clearInterval(ticker); unlock(); countdownEl.textContent = ''; });
+          // Countdown basato sulla durata reale del video
+          videoEl.addEventListener('loadedmetadata', () => {
+            if (isFinite(videoEl.duration)) {
+              countdownEl.textContent = Math.ceil(videoEl.duration) + 's';
+            }
+          });
+          videoEl.addEventListener('timeupdate', () => {
+            if (!isFinite(videoEl.duration)) return;
+            const left = Math.ceil(videoEl.duration - videoEl.currentTime);
+            countdownEl.textContent = left > 0 ? left + 's' : '✓';
+          });
+          videoEl.addEventListener('ended', unlock);
+          videoEl.addEventListener('error', unlock);
 
-          try {
-            const w = wrap.offsetWidth || 320;
-            const h = Math.round(w * 9 / 16) || 180;
-            adsManager.init(w, h, ima.ViewMode.NORMAL);
-            adsManager.start();
-          } catch (_) { unlock(); }
-        });
-
-        adsLoader.addEventListener(ima.AdErrorEvent.Type.AD_ERROR, () => { unlock(); countdownEl.textContent = ''; });
-
-        const req = new ima.AdsRequest();
-        req.adTagUrl = VAST_AD_TAG;
-        req.linearAdSlotWidth = 320;
-        req.linearAdSlotHeight = 180;
-        adsLoader.requestAds(req);
-      }).catch(() => { unlock(); container.innerHTML = ''; });
+          videoEl.src = url;
+          videoEl.play().catch(unlock);
+        })
+        .catch(() => { unlock(); container.innerHTML = ''; });
     }
     let currentSerataId = null;
     let songListChannel = null;
