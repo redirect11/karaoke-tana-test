@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estrazione Premi – La Tana del Coniglio</title>
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0L9K2JEB1P"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0L9K2JEB1P');
+  </script>
+  <style>
+    :root {
+      --bg: #12071f;
+      --bg2: #1e0f35;
+      --card: #2a1650;
+      --gold: #d4a017;
+      --gold-s: #f0c94a;
+      --muted: #a08ca0;
+      --text: #f0e6d3;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* ── Background layer ── */
+    #bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(ellipse at 50% 30%, #2a1650 0%, #12071f 70%);
+      transition: background 0.8s ease;
+      overflow: hidden;
+    }
+
+    #bg-layer .bg-photo {
+      position: absolute;
+      inset: -30px;
+      background-size: cover;
+      background-position: center;
+      filter: blur(24px) brightness(0.35) saturate(1.4);
+      transform: scale(1.1);
+      transition: opacity 1s ease;
+      opacity: 0;
+    }
+
+    #bg-layer .bg-photo.visible {
+      opacity: 1;
+    }
+
+    /* ── Reveal root ── */
+    #reveal-root {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: clamp(1.5rem, 4vw, 4rem);
+      width: 100%;
+      min-height: 100vh;
+      gap: clamp(1rem, 2.5vh, 2rem);
+    }
+
+    /* ── Inactive overlay ── */
+    #inactive-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: rgba(18, 7, 31, 0.92);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    #inactive-overlay.visible {
+      display: flex;
+    }
+
+    #inactive-overlay .inactive-icon {
+      font-size: clamp(3rem, 8vw, 6rem);
+      opacity: 0.4;
+    }
+
+    #inactive-overlay .inactive-title {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    #inactive-overlay .inactive-sub {
+      font-size: clamp(0.85rem, 1.8vw, 1.1rem);
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
+    /* ── State: Waiting ── */
+    .state-waiting {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(0.8rem, 2vh, 1.5rem);
+    }
+
+    .state-waiting .wait-icon {
+      font-size: clamp(4rem, 10vw, 8rem);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .state-waiting .wait-title {
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    .state-waiting .wait-sub {
+      font-size: clamp(1rem, 2.5vw, 1.6rem);
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── State: Prize shown ── */
+    .state-prize {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(1rem, 2.5vh, 2rem);
+    }
+
+    .prize-badge {
+      font-size: clamp(0.9rem, 2vw, 1.3rem);
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(212, 160, 23, 0.12);
+      border: 1px solid rgba(212, 160, 23, 0.3);
+      padding: 0.4em 1.2em;
+      border-radius: 2em;
+    }
+
+    .prize-photo-wrap {
+      position: relative;
+    }
+
+    .prize-photo {
+      width: clamp(140px, 20vw, 220px);
+      height: clamp(140px, 20vw, 220px);
+      border-radius: 1.2rem;
+      object-fit: cover;
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 40px rgba(212, 160, 23, 0.4), 0 8px 32px rgba(0,0,0,0.6);
+    }
+
+    .prize-photo-placeholder {
+      width: clamp(140px, 20vw, 220px);
+      height: clamp(140px, 20vw, 220px);
+      border-radius: 1.2rem;
+      background: var(--card);
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 40px rgba(212, 160, 23, 0.4), 0 8px 32px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(3rem, 7vw, 5rem);
+    }
+
+    .prize-name {
+      font-size: clamp(2rem, 6vw, 4.5rem);
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.1;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+      max-width: 80vw;
+    }
+
+    /* ── In-progress indicator ── */
+    .in-corso-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      font-size: clamp(1.1rem, 2.8vw, 1.8rem);
+      color: var(--gold-s);
+      font-weight: 600;
+    }
+
+    .in-corso-wrap .in-corso-text {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    .in-corso-wrap .dots {
+      display: inline-flex;
+      gap: 0.15em;
+    }
+
+    .in-corso-wrap .dots span {
+      display: inline-block;
+      animation: bounce-dot 1.4s ease-in-out infinite;
+      opacity: 0;
+    }
+
+    .in-corso-wrap .dots span:nth-child(1) { animation-delay: 0s; }
+    .in-corso-wrap .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .in-corso-wrap .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    /* ── State: Winner ── */
+    .state-winner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(0.8rem, 2vh, 1.8rem);
+    }
+
+    .winner-badge {
+      font-size: clamp(0.9rem, 2vw, 1.3rem);
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #fff;
+      background: linear-gradient(135deg, rgba(212,160,23,0.8), rgba(240,201,74,0.6));
+      padding: 0.4em 1.2em;
+      border-radius: 2em;
+      box-shadow: 0 2px 16px rgba(212, 160, 23, 0.5);
+    }
+
+    .winner-name {
+      font-size: clamp(3rem, 9vw, 7rem);
+      font-weight: 900;
+      color: var(--gold-s);
+      line-height: 1.05;
+      text-shadow: 0 0 60px rgba(240, 201, 74, 0.5), 0 4px 24px rgba(0,0,0,0.8);
+      max-width: 80vw;
+      animation: winner-appear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .winner-prize-name {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      font-weight: 600;
+      color: var(--text);
+      opacity: 0.85;
+    }
+
+    .winner-song {
+      font-size: clamp(1rem, 2.5vw, 1.6rem);
+      color: var(--text);
+      opacity: 0.7;
+    }
+
+    .winner-song em {
+      font-style: italic;
+      opacity: 0.85;
+    }
+
+    .winner-divider {
+      width: clamp(60px, 10vw, 120px);
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      border-radius: 1px;
+    }
+
+    /* ── Animations ── */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-12px); }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.6; }
+    }
+
+    @keyframes bounce-dot {
+      0%, 60%, 100% { opacity: 0; transform: translateY(0); }
+      30%            { opacity: 1; transform: translateY(-4px); }
+    }
+
+    @keyframes pulse-dots {
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 1; }
+    }
+
+    @keyframes winner-appear {
+      from { opacity: 0; transform: scale(0.7) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes confetti-spin {
+      from { transform: rotate(0deg) scale(1); }
+      50%  { transform: rotate(180deg) scale(1.1); }
+      to   { transform: rotate(360deg) scale(1); }
+    }
+
+    .winner-emoji {
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      animation: confetti-spin 3s ease-in-out infinite;
+      display: inline-block;
+    }
+
+    /* ── Gold shimmer for winner ── */
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .winner-name-shimmer {
+      background: linear-gradient(
+        90deg,
+        var(--gold) 20%,
+        var(--gold-s) 40%,
+        #fff5cc 50%,
+        var(--gold-s) 60%,
+        var(--gold) 80%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s linear infinite;
+    }
+
+    /* ── Loading ── */
+    #loading {
+      font-size: clamp(1rem, 2vw, 1.4rem);
+      color: var(--muted);
+      animation: pulse-dots 1.5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="bg-layer">
+    <div class="bg-photo" id="bg-photo"></div>
+  </div>
+
+  <div id="reveal-root">
+    <div id="loading">Caricamento…</div>
+  </div>
+
+  <div id="inactive-overlay">
+    <span class="inactive-icon">🔒</span>
+    <span class="inactive-title">Sistema non attivo</span>
+    <span class="inactive-sub">Il sistema di estrazione premi non è al momento abilitato.</span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script>
+    (function () {
+      const root         = document.getElementById('reveal-root');
+      const inactiveOvl  = document.getElementById('inactive-overlay');
+      const bgPhoto      = document.getElementById('bg-photo');
+
+      // ── Supabase client ──────────────────────────────────────────────────
+      const supabase = window.supabase.createClient(
+        window.CONFIG.SUPABASE_URL,
+        window.CONFIG.SUPABASE_ANON_KEY
+      );
+
+      // ── Helpers ──────────────────────────────────────────────────────────
+      function setBackground(fotoUrl) {
+        if (fotoUrl) {
+          bgPhoto.style.backgroundImage = `url('${fotoUrl}')`;
+          bgPhoto.classList.add('visible');
+        } else {
+          bgPhoto.classList.remove('visible');
+          bgPhoto.style.backgroundImage = '';
+        }
+      }
+
+      function esc(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // ── Render functions ─────────────────────────────────────────────────
+      function renderWaiting() {
+        setBackground(null);
+        root.innerHTML = `
+          <div class="state-waiting">
+            <span class="wait-icon">🎁</span>
+            <div class="wait-title">Premi &amp; Estrazioni</div>
+            <div class="wait-sub">In attesa dell'estrazione…</div>
+          </div>
+        `;
+      }
+
+      function renderPrize(payload) {
+        setBackground(payload.foto_url || null);
+        const photoHtml = payload.foto_url
+          ? `<img class="prize-photo" src="${esc(payload.foto_url)}" alt="Premio" />`
+          : `<div class="prize-photo-placeholder">🎁</div>`;
+
+        root.innerHTML = `
+          <div class="state-prize">
+            <div class="prize-badge">🎁 Premio</div>
+            <div class="prize-photo-wrap">${photoHtml}</div>
+            <div class="prize-name">${esc(payload.nome)}</div>
+            <div class="in-corso-wrap">
+              <span class="in-corso-text">Estrazione in corso</span>
+              <span class="dots">
+                <span>.</span><span>.</span><span>.</span>
+              </span>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderWinner(payload) {
+        setBackground(payload.foto_url || null);
+        const photoHtml = payload.foto_url
+          ? `<img class="prize-photo" src="${esc(payload.foto_url)}" alt="Premio" />`
+          : `<div class="prize-photo-placeholder">🎁</div>`;
+
+        const v = payload.vincitore;
+        const songLine = (v.canzone || v.artista)
+          ? `<div class="winner-song"><em>${esc(v.canzone || '')}</em>${v.canzone && v.artista ? ' — ' : ''}${esc(v.artista || '')}</div>`
+          : '';
+
+        root.innerHTML = `
+          <div class="state-winner">
+            <span class="winner-emoji">🎉</span>
+            <div class="winner-badge">🎉 Vincitore Estratto</div>
+            <div class="prize-photo-wrap">${photoHtml}</div>
+            <div class="winner-prize-name">${esc(payload.nome)}</div>
+            <div class="winner-divider"></div>
+            <div class="winner-name winner-name-shimmer">${esc(v.nome)}</div>
+            ${songLine}
+          </div>
+        `;
+      }
+
+      // ── Main render dispatcher ───────────────────────────────────────────
+      function render(abilitata, payload) {
+        if (!abilitata) {
+          inactiveOvl.classList.add('visible');
+          renderWaiting();
+          return;
+        }
+
+        inactiveOvl.classList.remove('visible');
+
+        if (!payload) {
+          renderWaiting();
+          return;
+        }
+
+        if (payload.vincitore) {
+          renderWinner(payload);
+        } else {
+          renderPrize(payload);
+        }
+      }
+
+      // ── Initial fetch ────────────────────────────────────────────────────
+      async function init() {
+        const { data, error } = await supabase
+          .from('impostazioni_pubbliche')
+          .select('gadget_estrazione_abilitata, gadget_reveal_payload')
+          .eq('id', 1)
+          .single();
+
+        if (error) {
+          console.error('Errore fetch impostazioni:', error);
+          root.innerHTML = `<div style="color:var(--muted);font-size:1.2rem;">Errore di connessione. Ricarica la pagina.</div>`;
+          return;
+        }
+
+        render(data.gadget_estrazione_abilitata, data.gadget_reveal_payload);
+        subscribeRealtime();
+      }
+
+      // ── Realtime subscription ─────────────────────────────────────────────
+      function subscribeRealtime() {
+        supabase
+          .channel('gadget-reveal-channel')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'impostazioni_pubbliche',
+              filter: 'id=eq.1'
+            },
+            (payload) => {
+              const row = payload.new;
+              render(row.gadget_estrazione_abilitata, row.gadget_reveal_payload);
+            }
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[gadget-reveal] Realtime attivo');
+            }
+          });
+      }
+
+      // ── Boot ─────────────────────────────────────────────────────────────
+      init();
+    })();
+  </script>
+</body>
+</html>

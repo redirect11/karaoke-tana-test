@@ -456,6 +456,86 @@
       align-items: center;
       flex-wrap: wrap;
     }
+    /* ── Gadget Premi & Estrazioni ── */
+    #gadget-admin-section { margin-bottom: 16px; }
+    .gadget-section-card {
+      background: var(--card);
+      border: 1px solid rgba(212,160,23,0.3);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .gadget-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .gadget-section-header h3 { margin: 0; font-size: 1rem; color: var(--gold); }
+    .gadget-section-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .gadget-premi-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .gadget-premio-card {
+      background: var(--card2);
+      border: 1px solid #3d2366;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .gadget-premio-thumb {
+      width: 52px; height: 52px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1.5px solid var(--gold);
+      flex-shrink: 0;
+    }
+    .gadget-premio-no-thumb {
+      width: 52px; height: 52px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      background: rgba(212,160,23,0.15);
+      border-radius: 8px; flex-shrink: 0;
+    }
+    .gadget-premio-info { flex: 1; min-width: 0; }
+    .gadget-premio-name { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+    .gadget-winner-badge { font-size: 0.8rem; color: var(--gold-s); font-weight: 700; margin-top: 3px; }
+    .gadget-premio-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .btn-gadget {
+      padding: 6px 12px;
+      border-radius: 8px; border: none; cursor: pointer;
+      font-size: 0.78rem; font-weight: 700;
+      transition: opacity 0.15s;
+    }
+    .btn-gadget:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-gadget:not(:disabled):hover { opacity: 0.82; }
+    .btn-gadget-mostra { background: #4b356f; color: #fff; }
+    .btn-gadget-estrai { background: var(--gold); color: #12071f; }
+    .btn-gadget-reset  { background: #555; color: #fff; }
+    .btn-gadget-delete { background: var(--red); color: #fff; }
+    .gadget-add-form { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px; margin-top: 4px; }
+    .gadget-add-form h4 { font-size: 0.82rem; color: var(--muted); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .gadget-add-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+    .gadget-nome-input {
+      flex: 1; min-width: 140px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid #4d2e7a; border-radius: 8px;
+      padding: 8px 12px; color: var(--text); font-size: 0.9rem;
+    }
+    .gadget-nome-input::placeholder { color: var(--muted); }
+    .gadget-foto-upload-wrap { display: flex; flex-direction: column; gap: 5px; }
+    .gadget-foto-label { font-size: 0.75rem; color: var(--muted); }
+    .gadget-foto-file {
+      background: rgba(255,255,255,0.06);
+      border: 1px dashed #4d2e7a; border-radius: 8px;
+      padding: 6px 10px; color: var(--muted); font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .gadget-foto-preview { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1.5px solid var(--gold); display: none; }
+    .gadget-upload-status { font-size: 0.75rem; color: var(--gold-s); font-style: italic; }
+    .gadget-empty-note { font-size: 0.82rem; color: var(--muted); text-align: center; padding: 16px 0; }
     .next-date-input {
       background: var(--bg2);
       border: 1px solid #3d2366;
@@ -1069,6 +1149,37 @@
     <div id="serata-wrap"></div>
     <div id="admin-ranking-wrap"></div>
 
+    <div id="gadget-admin-section" style="display:none;">
+      <div class="gadget-section-card">
+        <div class="gadget-section-header">
+          <h3>🎁 Premi &amp; Estrazioni</h3>
+          <div class="gadget-section-actions">
+            <a href="gadget-reveal.html" target="_blank" rel="noopener noreferrer"
+               class="btn-serata btn-secondary" style="text-decoration:none;text-align:center;display:inline-block;">
+              📺 Pagina proiettore
+            </a>
+            <button id="btn-reset-gadget-reveal" class="btn-serata btn-winner" type="button">🔄 Reset pagina</button>
+          </div>
+        </div>
+        <div id="gadget-premi-list">
+          <div class="gadget-empty-note">Nessun premio aggiunto.</div>
+        </div>
+        <div class="gadget-add-form">
+          <h4>Aggiungi premio</h4>
+          <div class="gadget-add-row">
+            <input class="gadget-nome-input" type="text" id="gadget-nome-input" placeholder="Nome del premio" />
+            <div class="gadget-foto-upload-wrap">
+              <span class="gadget-foto-label">Foto (opzionale)</span>
+              <input class="gadget-foto-file" type="file" id="gadget-foto-file" accept="image/jpeg,image/png,image/webp" />
+              <img id="gadget-foto-preview" class="gadget-foto-preview" alt="anteprima" />
+              <span id="gadget-upload-status" class="gadget-upload-status"></span>
+            </div>
+            <button id="btn-add-gadget-premio" class="btn-serata btn-open" type="button">+ Aggiungi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="current-song-wrap" style="display:none;">
       <div class="current-song-label">
         <span class="current-song-pulse"></span>
@@ -1149,7 +1260,10 @@
       winner_reveal_animation_enabled: true,
       winner_reveal_animation_mode: 'automatic',
       winner_reveal_auto_step_seconds: DEFAULT_WINNER_REVEAL_AUTO_STEP_SECONDS,
+      gadget_estrazione_abilitata: false,
     };
+    let gadgetSerataId = null;
+    let gadgetUploadedFotoUrl = null;
     let syncConnected = false;
     let activeQueueTab = 'pending';
     let adminToken = '';
@@ -1482,6 +1596,7 @@
         renderSerata();
         renderQueue(bookings);
         renderAdminFinalRanking();
+        renderGadgetSection();
         updateLiveDot();
         scheduleWinnerRevealAutomation(400);
       } catch (error) {
@@ -2489,6 +2604,188 @@
       }
       alert(message);
     }
+
+    // ── Gadget Premi & Estrazioni ─────────────────────────────────
+    function renderGadgetSection() {
+      const section = document.getElementById('gadget-admin-section');
+      if (!section) return;
+      const enabled = publicSettings?.gadget_estrazione_abilitata === true;
+      section.style.display = enabled ? '' : 'none';
+      if (!enabled) return;
+      const newSerataId = currentSerata?.id ?? null;
+      if (newSerataId !== gadgetSerataId) {
+        gadgetSerataId = newSerataId;
+        loadGadgetPremi();
+      }
+    }
+
+    async function loadGadgetPremi() {
+      const listEl = document.getElementById('gadget-premi-list');
+      if (!listEl) return;
+      if (!gadgetSerataId) {
+        listEl.innerHTML = '<div class="gadget-empty-note">Apri una serata per gestire i premi.</div>';
+        return;
+      }
+      try {
+        const data = await callAdmin('get_gadget_premi', { serataId: gadgetSerataId });
+        renderGadgetPremi(Array.isArray(data?.premi) ? data.premi : [], data?.estrazioni || []);
+      } catch (err) {
+        listEl.innerHTML = `<div class="gadget-empty-note">Errore: ${esc(err?.message || 'caricamento fallito')}</div>`;
+      }
+    }
+
+    function renderGadgetPremi(premi, estrazioni) {
+      const listEl = document.getElementById('gadget-premi-list');
+      if (!listEl) return;
+      if (!premi.length) {
+        listEl.innerHTML = '<div class="gadget-empty-note">Nessun premio aggiunto.</div>';
+        return;
+      }
+      const estMap = {};
+      (estrazioni || []).forEach((e) => { estMap[e.premio_id] = e; });
+      listEl.innerHTML = premi.map((p) => {
+        const est = estMap[p.id];
+        const fotoHtml = p.foto_url
+          ? `<img src="${esc(p.foto_url)}" class="gadget-premio-thumb" alt="${esc(p.nome)}" />`
+          : `<div class="gadget-premio-no-thumb">🎁</div>`;
+        const winnerHtml = est
+          ? `<div class="gadget-winner-badge">🏆 ${esc(est.vincitore_nome || '')} · ${esc(est.canzone || '')}</div>`
+          : '';
+        return `
+          <div class="gadget-premio-card">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+              ${fotoHtml}
+              <div class="gadget-premio-info">
+                <div class="gadget-premio-name">${esc(p.nome)}</div>
+                ${winnerHtml}
+              </div>
+            </div>
+            <div class="gadget-premio-btns">
+              <button class="btn-gadget btn-gadget-mostra" data-id="${p.id}" type="button">📺 Mostra</button>
+              ${!est
+                ? `<button class="btn-gadget btn-gadget-estrai" data-id="${p.id}" type="button">🎲 Estrai</button>`
+                : `<button class="btn-gadget btn-gadget-reset"  data-id="${p.id}" type="button">↩ Reset</button>`}
+              <button class="btn-gadget btn-gadget-delete" data-id="${p.id}" type="button">🗑</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      listEl.querySelectorAll('.btn-gadget-mostra').forEach((btn) =>
+        btn.addEventListener('click', () => gadgetMostra(Number(btn.dataset.id))));
+      listEl.querySelectorAll('.btn-gadget-estrai').forEach((btn) =>
+        btn.addEventListener('click', () => gadgetEstrai(Number(btn.dataset.id))));
+      listEl.querySelectorAll('.btn-gadget-reset').forEach((btn) =>
+        btn.addEventListener('click', () => gadgetResetEstrazione(Number(btn.dataset.id))));
+      listEl.querySelectorAll('.btn-gadget-delete').forEach((btn) =>
+        btn.addEventListener('click', () => gadgetDelete(Number(btn.dataset.id))));
+    }
+
+    async function gadgetMostra(premioId) {
+      try {
+        await callAdmin('mostra_gadget_premio', { premioId });
+      } catch (err) {
+        alert(err?.message || 'Errore durante mostra premio.');
+      }
+    }
+
+    async function gadgetEstrai(premioId) {
+      if (!gadgetSerataId) { alert('Apri una serata prima.'); return; }
+      if (!confirm('Estrarre un vincitore casuale per questo premio?')) return;
+      try {
+        const res = await callAdmin('estrai_gadget_premio', { premioId, serataId: gadgetSerataId });
+        await loadGadgetPremi();
+        alert(`🎉 Vincitore estratto: ${res?.vincitore || '?'}`);
+      } catch (err) {
+        alert(err?.message || "Errore durante l'estrazione.");
+      }
+    }
+
+    async function gadgetResetEstrazione(premioId) {
+      if (!confirm("Resettare l'estrazione? Il vincitore verrà rimosso.")) return;
+      try {
+        await callAdmin('reset_gadget_estrazione', { premioId });
+        await loadGadgetPremi();
+      } catch (err) {
+        alert(err?.message || 'Errore durante il reset.');
+      }
+    }
+
+    async function gadgetDelete(premioId) {
+      if (!confirm('Eliminare questo premio?')) return;
+      try {
+        await callAdmin('delete_gadget_premio', { premioId });
+        await loadGadgetPremi();
+      } catch (err) {
+        alert(err?.message || "Errore durante l'eliminazione.");
+      }
+    }
+
+    async function gadgetResetReveal() {
+      try {
+        await callAdmin('chiudi_gadget_reveal');
+      } catch (err) {
+        alert(err?.message || 'Errore durante il reset della pagina.');
+      }
+    }
+
+    // Upload foto gadget
+    document.getElementById('gadget-foto-file')?.addEventListener('change', async function () {
+      const file = this.files?.[0];
+      const previewEl = document.getElementById('gadget-foto-preview');
+      const statusEl = document.getElementById('gadget-upload-status');
+      if (!file) {
+        gadgetUploadedFotoUrl = null;
+        if (previewEl) previewEl.style.display = 'none';
+        if (statusEl) statusEl.textContent = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Foto troppo grande (max 5 MB).');
+        this.value = '';
+        return;
+      }
+      if (statusEl) statusEl.textContent = '⏳ Caricamento...';
+      if (previewEl) previewEl.style.display = 'none';
+      try {
+        const ext = file.name.split('.').pop() || 'jpg';
+        const path = `premio-${Date.now()}.${ext}`;
+        const { data: upData, error: upErr } = await supabaseClient.storage
+          .from('gadget-photos')
+          .upload(path, file, { contentType: file.type, upsert: true });
+        if (upErr) throw upErr;
+        const { data: urlData } = supabaseClient.storage.from('gadget-photos').getPublicUrl(upData.path);
+        gadgetUploadedFotoUrl = urlData.publicUrl;
+        if (previewEl) { previewEl.src = gadgetUploadedFotoUrl; previewEl.style.display = 'block'; }
+        if (statusEl) statusEl.textContent = '✅ Caricata';
+      } catch (err) {
+        gadgetUploadedFotoUrl = null;
+        if (statusEl) statusEl.textContent = '❌ Errore upload';
+        alert(err?.message || 'Errore durante il caricamento della foto.');
+      }
+    });
+
+    document.getElementById('btn-add-gadget-premio')?.addEventListener('click', async () => {
+      const nomeInput = document.getElementById('gadget-nome-input');
+      const nome = nomeInput?.value.trim();
+      if (!nome) { nomeInput?.focus(); return; }
+      try {
+        await callAdmin('add_gadget_premio', { nome, fotoUrl: gadgetUploadedFotoUrl || null });
+        nomeInput.value = '';
+        const fileInput = document.getElementById('gadget-foto-file');
+        if (fileInput) fileInput.value = '';
+        const previewEl = document.getElementById('gadget-foto-preview');
+        if (previewEl) previewEl.style.display = 'none';
+        const statusEl = document.getElementById('gadget-upload-status');
+        if (statusEl) statusEl.textContent = '';
+        gadgetUploadedFotoUrl = null;
+        await loadGadgetPremi();
+      } catch (err) {
+        alert(err?.message || "Errore durante l'aggiunta del premio.");
+      }
+    });
+
+    document.getElementById('btn-reset-gadget-reveal')?.addEventListener('click', gadgetResetReveal);
+    // ─────────────────────────────────────────────────────────────
 
     function esc(str) {
       return String(str)
