@@ -1394,6 +1394,121 @@
     .nav-drawer a:hover { background:rgba(255,255,255,0.06); }
     .nav-drawer a.active { border-left-color:#d4a017; color:#f0c94a; }
     .nav-drawer-sep { height:1px; background:rgba(255,255,255,0.07); margin:8px 20px; }
+
+    /* ── Gadget Reveal Overlay ─────────────────────────────────────────────── */
+    #gadget-reveal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: #0e0518;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+    }
+    #gadget-reveal-overlay.visible { display: flex; }
+    .gadget-reveal-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      filter: blur(18px) brightness(0.35);
+      transform: scale(1.08);
+    }
+    .gadget-reveal-bg.placeholder {
+      background:
+        radial-gradient(circle at 20% 20%, rgba(212,160,23,0.22), transparent 55%),
+        radial-gradient(circle at 80% 80%, rgba(140,40,180,0.35), transparent 55%),
+        linear-gradient(135deg, #2a1650 0%, #1d1430 100%);
+    }
+    .gadget-reveal-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+    }
+    .gadget-reveal-prize-photo {
+      width: 140px;
+      height: 140px;
+      border-radius: 16px;
+      object-fit: cover;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      border: 2px solid rgba(212,160,23,0.5);
+    }
+    .gadget-reveal-prize-photo.placeholder {
+      background:
+        radial-gradient(circle at 30% 30%, rgba(212,160,23,0.25), transparent 60%),
+        linear-gradient(135deg, #2a1650, #1d1430);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+    }
+    .gadget-reveal-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, var(--gold) 0%, #b07a00 100%);
+      color: #1a0a00;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 16px rgba(212,160,23,0.45);
+    }
+    .gadget-reveal-prize-name {
+      font-size: clamp(1.6rem, 5vw, 2.8rem);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.7);
+    }
+    .gadget-reveal-winner-name {
+      font-size: clamp(1.25rem, 4vw, 2rem);
+      font-weight: 800;
+      color: var(--gold-soft, #f0c94a);
+      text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    }
+    .gadget-reveal-winner-song {
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.8);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .gadget-reveal-waiting {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.04em;
+    }
+    .gadget-reveal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 3;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #fff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .gadget-reveal-close:hover { background: rgba(255,255,255,0.18); }
+    @media (max-width: 480px) {
+      .gadget-reveal-prize-photo { width: 100px; height: 100px; }
+    }
   </style>
   <link rel="stylesheet" href="scripts/vendor/cookieconsent.css" />
   <script type="application/ld+json">
@@ -1771,6 +1886,25 @@
     </p>
   </section>
 
+  <!-- ── Gadget Reveal Overlay ─────────────────────────────────────────── -->
+  <div id="gadget-reveal-overlay" role="dialog" aria-modal="true" aria-label="Estrazione premio">
+    <button class="gadget-reveal-close" id="gadget-reveal-close-btn" aria-label="Chiudi">✕</button>
+    <div class="gadget-reveal-bg placeholder" id="gadget-reveal-bg"></div>
+    <div class="gadget-reveal-content">
+      <div class="gadget-reveal-prize-photo placeholder" id="gadget-reveal-photo">🎁</div>
+      <div>
+        <span class="gadget-reveal-label" id="gadget-reveal-label">🎁 Premio</span>
+      </div>
+      <div class="gadget-reveal-prize-name" id="gadget-reveal-prize-name">Premio</div>
+      <div id="gadget-reveal-winner-wrap" style="display:none;flex-direction:column;align-items:center;gap:8px;">
+        <div class="gadget-reveal-label">🎉 Vincitore estratto</div>
+        <div class="gadget-reveal-winner-name" id="gadget-reveal-winner-name"></div>
+        <div class="gadget-reveal-winner-song" id="gadget-reveal-winner-song"></div>
+      </div>
+      <div class="gadget-reveal-waiting" id="gadget-reveal-waiting">Estrazione in corso…</div>
+    </div>
+  </div>
+
   <footer>
     <a href="chi-siamo.html" style="color:inherit;text-decoration:underline;">Chi siamo</a>
     &nbsp;|&nbsp;
@@ -2091,6 +2225,8 @@
       email_campo_abilitato: true,
       email_gate_abilitato: true,
       email_gate_modalita: 'entrambi',
+      gadget_estrazione_abilitata: false,
+      gadget_reveal_payload: null,
     };
 
     // ── UI refs ─────────────────────────────────────────────
@@ -2306,13 +2442,14 @@
       if (!db) return publicSettings;
       const { data, error } = await db
         .from('impostazioni_pubbliche')
-        .select('archivio_pubblico_abilitato, manutenzione_abilitata, modalita_post_approvazione, home_subtitle_enabled, home_subtitle_text, home_follow_title, home_follow_message, home_form_title, home_form_message, home_success_title, home_success_message, home_waiting_title, home_waiting_message, home_bookings_disabled_title, home_bookings_disabled_message, home_closed_title, home_closed_message, home_maintenance_title, home_maintenance_message, prossima_serata_data, winner_reveal_animation_enabled, email_campo_abilitato, email_gate_abilitato, email_gate_modalita')
+        .select('archivio_pubblico_abilitato, manutenzione_abilitata, modalita_post_approvazione, home_subtitle_enabled, home_subtitle_text, home_follow_title, home_follow_message, home_form_title, home_form_message, home_success_title, home_success_message, home_waiting_title, home_waiting_message, home_bookings_disabled_title, home_bookings_disabled_message, home_closed_title, home_closed_message, home_maintenance_title, home_maintenance_message, prossima_serata_data, winner_reveal_animation_enabled, email_campo_abilitato, email_gate_abilitato, email_gate_modalita, gadget_estrazione_abilitata, gadget_reveal_payload')
         .eq('id', 1)
         .maybeSingle();
       if (!error && data) {
         publicSettings = data;
         applyHomeCopy();
         applyEmailGateSettings();
+        applyGadgetReveal();
       }
       return publicSettings;
     }
@@ -2364,6 +2501,86 @@
       if (campoWrapper) campoWrapper.style.display = campoOn ? '' : 'none';
       if (gateHint) gateHint.style.display = (campoOn && gateOn) ? '' : 'none';
     }
+
+    // ── Gadget Reveal ────────────────────────────────────────────────────
+    const gadgetRevealOverlay = document.getElementById('gadget-reveal-overlay');
+    const gadgetRevealBg      = document.getElementById('gadget-reveal-bg');
+    const gadgetRevealPhoto   = document.getElementById('gadget-reveal-photo');
+    const gadgetRevealLabel   = document.getElementById('gadget-reveal-label');
+    const gadgetRevealPrizeName  = document.getElementById('gadget-reveal-prize-name');
+    const gadgetRevealWinnerWrap = document.getElementById('gadget-reveal-winner-wrap');
+    const gadgetRevealWinnerName = document.getElementById('gadget-reveal-winner-name');
+    const gadgetRevealWinnerSong = document.getElementById('gadget-reveal-winner-song');
+    const gadgetRevealWaiting    = document.getElementById('gadget-reveal-waiting');
+    const gadgetRevealCloseBtn   = document.getElementById('gadget-reveal-close-btn');
+
+    if (gadgetRevealCloseBtn) {
+      gadgetRevealCloseBtn.addEventListener('click', () => {
+        if (gadgetRevealOverlay) gadgetRevealOverlay.classList.remove('visible');
+      });
+    }
+
+    function applyGadgetReveal() {
+      if (!gadgetRevealOverlay) return;
+      const payload = publicSettings?.gadget_reveal_payload;
+      if (!payload) {
+        gadgetRevealOverlay.classList.remove('visible');
+        return;
+      }
+
+      const fotoUrl = payload.foto_url || null;
+      if (fotoUrl) {
+        gadgetRevealBg.style.backgroundImage = `url('${fotoUrl}')`;
+        gadgetRevealBg.classList.remove('placeholder');
+        gadgetRevealPhoto.innerHTML = `<img class="gadget-reveal-prize-photo" src="${escapeHtml(fotoUrl)}" alt="Premio" style="width:140px;height:140px;border-radius:16px;object-fit:cover;">`;
+        gadgetRevealPhoto.classList.remove('placeholder');
+      } else {
+        gadgetRevealBg.style.backgroundImage = '';
+        gadgetRevealBg.classList.add('placeholder');
+        gadgetRevealPhoto.textContent = '🎁';
+        gadgetRevealPhoto.classList.add('placeholder');
+      }
+
+      gadgetRevealPrizeName.textContent = payload.nome || 'Premio';
+
+      const vincitore = payload.vincitore || null;
+      if (vincitore) {
+        gadgetRevealLabel.textContent = '🎉 Vincitore estratto';
+        gadgetRevealWinnerName.textContent = vincitore.nome || '';
+        const songLabel = vincitore.artista
+          ? `${vincitore.canzone} — ${vincitore.artista}`
+          : (vincitore.canzone || '');
+        gadgetRevealWinnerSong.textContent = songLabel;
+        gadgetRevealWinnerWrap.style.display = 'flex';
+        gadgetRevealWaiting.style.display = 'none';
+      } else {
+        gadgetRevealLabel.textContent = '🎁 Premio';
+        gadgetRevealWinnerWrap.style.display = 'none';
+        gadgetRevealWaiting.style.display = 'block';
+        gadgetRevealWaiting.textContent = 'L\'estrazione è in corso…';
+      }
+
+      gadgetRevealOverlay.classList.add('visible');
+    }
+
+    // Subscription realtime per aggiornamenti istantanei del reveal
+    function startGadgetRevealSync() {
+      if (!db) return;
+      db.channel('gadget-reveal-sync')
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'impostazioni_pubbliche',
+          filter: 'id=eq.1',
+        }, (payload) => {
+          if (payload.new) {
+            publicSettings = { ...publicSettings, ...payload.new };
+            applyGadgetReveal();
+          }
+        })
+        .subscribe();
+    }
+    startGadgetRevealSync();
 
     ensurePublicSettingsPolling();
 
