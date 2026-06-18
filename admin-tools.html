@@ -281,40 +281,6 @@
       gap: 14px;
       padding-top: 14px;
     }
-    .gadget-premio-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
-      padding: 12px 14px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-    .gadget-premio-thumb {
-      width: 56px;
-      height: 56px;
-      border-radius: 8px;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: linear-gradient(135deg,#2a1650,#1d1430);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.6rem;
-      border: 1px solid rgba(212,160,23,0.25);
-    }
-    .gadget-premio-card img { width:56px;height:56px;border-radius:8px;object-fit:cover; }
-    .gadget-premio-info { flex: 1; min-width: 0; }
-    .gadget-premio-nome { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
-    .gadget-premio-vincitore { font-size: 0.78rem; color: #b8c0cc; margin-bottom: 8px; }
-    .gadget-premio-vincitore.estratto { color: #f0c94a; font-weight: 600; }
-    .gadget-premio-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-    .gadget-btn { padding: 5px 12px; font-size: 0.78rem; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
-    .gadget-btn-show { background: #4b356f; color: #fff; }
-    .gadget-btn-extract { background: #d4a017; color: #1a0a00; }
-    .gadget-btn-reset { background: rgba(255,80,80,0.2); color: #ff8080; border: 1px solid rgba(255,80,80,0.3); }
-    .gadget-btn-delete { background: rgba(255,255,255,0.06); color: #aaa; border: 1px solid rgba(255,255,255,0.12); }
-    .gadget-btn:disabled { opacity: 0.45; cursor: not-allowed; }
   </style>
   <link rel="stylesheet" href="scripts/vendor/cookieconsent.css" />
 </head>
@@ -463,7 +429,7 @@
         </div>
         <div class="setting-sub-box">
           <div class="setting-label">Estrazione gadget</div>
-          <p>Abilita il sistema di estrazione premi durante la serata.</p>
+          <p>Abilita il sistema di estrazione premi. I controlli per aggiungere premi ed estrarre i vincitori si trovano nel <a href="admin.html" style="color:var(--gold);">pannello admin</a> (visibili solo quando abilitato).</p>
           <div class="status-box" id="gadget-estrazione-status-box">
             <strong>Caricamento…</strong>
           </div>
@@ -471,37 +437,6 @@
             <button class="action-btn btn-public-settings" id="btn-toggle-gadget-estrazione" type="button">—</button>
           </div>
         </div>
-
-          </div>
-        </details>
-      </section>
-
-      <!-- ── PREMI & ESTRAZIONI ─────────────────────────────── -->
-      <section class="card" id="gadget-section">
-        <details class="settings-collapsible" open>
-          <summary>🎁 Premi &amp; Estrazioni</summary>
-          <div class="details-body">
-
-            <div class="setting-sub-box">
-              <div class="setting-label">Aggiungi premio</div>
-              <p>Aggiungi i premi da estrarre durante la serata.</p>
-              <div class="actions" style="flex-wrap:wrap;gap:8px;">
-                <input id="gadget-premio-nome" type="text" placeholder="Nome del premio" maxlength="120" style="flex:1;min-width:140px;" />
-                <input id="gadget-premio-foto" type="url" placeholder="URL foto (opzionale)" maxlength="500" style="flex:2;min-width:200px;" />
-                <button class="action-btn btn-public-settings" id="btn-add-gadget-premio" type="button">Aggiungi</button>
-              </div>
-            </div>
-
-            <div class="setting-sub-box">
-              <div class="setting-label">Premi della serata</div>
-              <div id="gadget-premi-list" style="margin-top:8px;">
-                <p style="color:var(--muted);font-size:0.82rem;">Nessun premio aggiunto.</p>
-              </div>
-              <div class="actions" style="margin-top:12px;">
-                <button class="action-btn" id="btn-chiudi-gadget-reveal" type="button" style="background:rgba(255,255,255,0.08);">Chiudi schermata pubblica</button>
-                <button class="action-btn" id="btn-reload-gadget-premi" type="button" style="background:rgba(255,255,255,0.06);">↺ Aggiorna lista</button>
-              </div>
-            </div>
 
           </div>
         </details>
@@ -782,9 +717,6 @@
     document.getElementById('btn-toggle-email-campo')?.addEventListener('click', toggleEmailCampo);
     document.getElementById('btn-save-email-gate-modalita')?.addEventListener('click', saveEmailGateModalita);
     document.getElementById('btn-toggle-gadget-estrazione')?.addEventListener('click', toggleGadgetEstrazione);
-    document.getElementById('btn-add-gadget-premio')?.addEventListener('click', addGadgetPremio);
-    document.getElementById('btn-reload-gadget-premi')?.addEventListener('click', () => loadGadgetPremi());
-    document.getElementById('btn-chiudi-gadget-reveal')?.addEventListener('click', chiudiGadgetReveal);
     btnSavePostApprovalMode.addEventListener('click', savePostApprovalMode);
     btnSaveNextDate.addEventListener('click', saveNextKaraokeDate);
     btnClearNextDate.addEventListener('click', clearNextKaraokeDate);
@@ -905,10 +837,8 @@
         const state = await callAdmin('get_state');
         currentSerata = state?.serata || null;
         publicSettings = state?.settings || publicSettings;
-        gadgetCurrentSerataId = currentSerata?.id ? Number(currentSerata.id) : null;
         renderCurrentSerata();
         renderPublicSettings();
-        loadGadgetPremi();
       } catch (error) {
         setStatus(error?.message || 'Non sono riuscito a leggere la serata corrente.', true);
       }
@@ -1409,9 +1339,6 @@
 
     // ── Gadget Estrazione ─────────────────────────────────────────────────
 
-    let gadgetCurrentSerataId = null;
-    let gadgetPremiCache = [];
-
     async function toggleGadgetEstrazione() {
       const btn = document.getElementById('btn-toggle-gadget-estrazione');
       const nextValue = !(publicSettings?.gadget_estrazione_abilitata === true);
@@ -1426,140 +1353,7 @@
       }
     }
 
-    async function loadGadgetPremi() {
-      const serataId = gadgetCurrentSerataId;
-      const listEl = document.getElementById('gadget-premi-list');
-      if (listEl) listEl.innerHTML = '<p style="color:var(--muted);font-size:0.82rem;">Caricamento…</p>';
-      try {
-        const data = await callAdmin('get_gadget_premi', serataId ? { serataId } : {});
-        gadgetPremiCache = Array.isArray(data) ? data : [];
-        renderGadgetPremi(gadgetPremiCache);
-      } catch (error) {
-        if (listEl) listEl.innerHTML = `<p style="color:#ff7b7b;font-size:0.82rem;">Errore: ${escapeHtml(error?.message || 'impossibile caricare i premi.')}</p>`;
-      }
-    }
 
-    function renderGadgetPremi(premi) {
-      const listEl = document.getElementById('gadget-premi-list');
-      if (!listEl) return;
-      if (!premi || !premi.length) {
-        listEl.innerHTML = '<p style="color:var(--muted);font-size:0.82rem;">Nessun premio aggiunto.</p>';
-        return;
-      }
-      listEl.innerHTML = premi.map((p) => {
-        const estrazione = p.estrazione;
-        const vinc = estrazione?.prenotazioni;
-        const vincLabel = vinc
-          ? `🏆 ${escapeHtml(vinc.nome)} — ${escapeHtml(vinc.canzone)}`
-          : '<span style="color:var(--muted)">Non ancora estratto</span>';
-        const thumbHtml = p.foto_url
-          ? `<img src="${escapeHtml(p.foto_url)}" alt="foto" onerror="this.parentNode.textContent='🎁'">`
-          : '🎁';
-        return `
-          <div class="gadget-premio-card" data-premio-id="${p.id}">
-            <div class="gadget-premio-thumb">${thumbHtml}</div>
-            <div class="gadget-premio-info">
-              <div class="gadget-premio-nome">${escapeHtml(p.nome)}</div>
-              <div class="gadget-premio-vincitore ${vinc ? 'estratto' : ''}">${vincLabel}</div>
-              <div class="gadget-premio-actions">
-                <button class="gadget-btn gadget-btn-show" onclick="mostraGadgetPremio(${p.id})">👁 Mostra a schermo</button>
-                ${vinc
-                  ? `<button class="gadget-btn gadget-btn-reset" onclick="resetGadgetEstrazione(${p.id})">↺ Reset estrazione</button>`
-                  : `<button class="gadget-btn gadget-btn-extract" onclick="estraiGadgetPremio(${p.id})" ${!gadgetCurrentSerataId ? 'disabled title="Nessuna serata aperta"' : ''}>🎲 Estrai vincitore</button>`
-                }
-                <button class="gadget-btn gadget-btn-delete" onclick="deleteGadgetPremio(${p.id})">🗑</button>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    async function addGadgetPremio() {
-      const nomeInput = document.getElementById('gadget-premio-nome');
-      const fotoInput = document.getElementById('gadget-premio-foto');
-      const btn = document.getElementById('btn-add-gadget-premio');
-      const nome = nomeInput?.value.trim() || '';
-      const fotoUrl = fotoInput?.value.trim() || null;
-      if (!nome) { setStatus('Inserisci il nome del premio.', true); return; }
-      setBusy(btn, true, 'Aggiunta…');
-      try {
-        await callAdmin('add_gadget_premio', { nome, fotoUrl });
-        if (nomeInput) nomeInput.value = '';
-        if (fotoInput) fotoInput.value = '';
-        await loadGadgetPremi();
-      } catch (error) {
-        setStatus(error?.message || 'Impossibile aggiungere il premio.', true);
-      } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'Aggiungi'; }
-      }
-    }
-
-    async function deleteGadgetPremio(premioId) {
-      if (!confirm('Eliminare questo premio?')) return;
-      try {
-        await callAdmin('delete_gadget_premio', { premioId });
-        await loadGadgetPremi();
-      } catch (error) {
-        setStatus(error?.message || 'Impossibile eliminare il premio.', true);
-      }
-    }
-
-    async function mostraGadgetPremio(premioId) {
-      const card = document.querySelector(`[data-premio-id="${premioId}"]`);
-      const btn = card?.querySelector('.gadget-btn-show');
-      if (btn) setBusy(btn, true, '…');
-      try {
-        await callAdmin('mostra_gadget_premio', { premioId });
-        setStatus('Premio mostrato a schermo.');
-      } catch (error) {
-        setStatus(error?.message || 'Impossibile mostrare il premio.', true);
-      } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '👁 Mostra a schermo'; }
-      }
-    }
-
-    async function estraiGadgetPremio(premioId) {
-      if (!gadgetCurrentSerataId) { setStatus('Nessuna serata aperta.', true); return; }
-      const card = document.querySelector(`[data-premio-id="${premioId}"]`);
-      const btn = card?.querySelector('.gadget-btn-extract');
-      if (btn) setBusy(btn, true, 'Estrazione…');
-      try {
-        const result = await callAdmin('estrai_gadget_premio', { premioId, serataId: gadgetCurrentSerataId });
-        setStatus(`Estratto: ${result?.vincitore?.nome || '?'}`);
-        await loadGadgetPremi();
-      } catch (error) {
-        setStatus(error?.message || 'Impossibile estrarre il vincitore.', true);
-        if (btn) { btn.disabled = false; btn.textContent = '🎲 Estrai vincitore'; }
-      }
-    }
-
-    async function resetGadgetEstrazione(premioId) {
-      if (!confirm('Annullare l\'estrazione per questo premio?')) return;
-      const card = document.querySelector(`[data-premio-id="${premioId}"]`);
-      const btn = card?.querySelector('.gadget-btn-reset');
-      if (btn) setBusy(btn, true, '…');
-      try {
-        await callAdmin('reset_gadget_estrazione', { premioId });
-        await loadGadgetPremi();
-      } catch (error) {
-        setStatus(error?.message || 'Impossibile resettare l\'estrazione.', true);
-        if (btn) { btn.disabled = false; btn.textContent = '↺ Reset estrazione'; }
-      }
-    }
-
-    async function chiudiGadgetReveal() {
-      const btn = document.getElementById('btn-chiudi-gadget-reveal');
-      if (btn) setBusy(btn, true, '…');
-      try {
-        await callAdmin('chiudi_gadget_reveal', {});
-        setStatus('Schermata pubblica chiusa.');
-      } catch (error) {
-        setStatus(error?.message || 'Impossibile chiudere la schermata.', true);
-      } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'Chiudi schermata pubblica'; }
-      }
-    }
   </script>
   <script defer src="scripts/vendor/cookieconsent.umd.js"></script>
   <script defer src="cookie-consent.js"></script>
