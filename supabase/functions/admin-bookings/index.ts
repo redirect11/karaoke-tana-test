@@ -681,6 +681,7 @@ async function updatePublicSettings(
     winner_reveal_animation_enabled?: boolean;
     winner_reveal_animation_mode?: "manual" | "automatic";
     winner_reveal_auto_step_seconds?: number;
+    gadget_estrazione_abilitata?: boolean;
   },
 ) {
   await getPublicSettings(admin);
@@ -725,6 +726,9 @@ async function updatePublicSettings(
   }
   if (Number.isInteger(updates.winner_reveal_auto_step_seconds)) {
     payload.winner_reveal_auto_step_seconds = updates.winner_reveal_auto_step_seconds;
+  }
+  if (typeof updates.gadget_estrazione_abilitata === "boolean") {
+    payload.gadget_estrazione_abilitata = updates.gadget_estrazione_abilitata;
   }
   const { data, error } = await admin
     .from("impostazioni_pubbliche")
@@ -816,6 +820,17 @@ async function getArchive(admin: ReturnType<typeof createClient>, serataId?: num
   return { editions: normalizedEditions, detail };
 }
 
+async function setGadgetRevealPayload(
+  admin: ReturnType<typeof createClient>,
+  payload: Record<string, unknown> | null,
+) {
+  const { error } = await admin
+    .from("impostazioni_pubbliche")
+    .update({ gadget_reveal_payload: payload, updated_at: new Date().toISOString() })
+    .eq("id", 1);
+  if (error) throw new ApiError(500, "update_failed", "Impossibile aggiornare il payload reveal.");
+}
+
 async function executeAction(admin: ReturnType<typeof createClient>, action: string, body: Record<string, unknown>) {
   switch (action) {
     case "ping": {
@@ -857,6 +872,7 @@ async function executeAction(admin: ReturnType<typeof createClient>, action: str
         winner_reveal_animation_enabled?: boolean;
         winner_reveal_animation_mode?: "manual" | "automatic";
         winner_reveal_auto_step_seconds?: number;
+        gadget_estrazione_abilitata?: boolean;
       } = {};
       if (typeof body.archivioPubblicoAbilitato === "boolean") {
         updates.archivio_pubblico_abilitato = body.archivioPubblicoAbilitato;
@@ -930,6 +946,9 @@ async function executeAction(admin: ReturnType<typeof createClient>, action: str
       if (Object.prototype.hasOwnProperty.call(body, "winnerRevealAutoStepSeconds")) {
         updates.winner_reveal_auto_step_seconds = parseRevealAutoStepSeconds(body.winnerRevealAutoStepSeconds);
       }
+      if (typeof body.gadgetEstrazioneAbilitata === "boolean") {
+        updates.gadget_estrazione_abilitata = body.gadgetEstrazioneAbilitata;
+      }
       if (
         typeof updates.archivio_pubblico_abilitato !== "boolean"
         && typeof updates.manutenzione_abilitata !== "boolean"
@@ -955,11 +974,12 @@ async function executeAction(admin: ReturnType<typeof createClient>, action: str
         && typeof updates.winner_reveal_animation_enabled !== "boolean"
         && typeof updates.winner_reveal_animation_mode !== "string"
         && !Number.isInteger(updates.winner_reveal_auto_step_seconds)
+        && typeof updates.gadget_estrazione_abilitata !== "boolean"
       ) {
         throw new ApiError(
           400,
           "invalid_payload",
-          "Specifica almeno archivioPubblicoAbilitato, modalitaPostApprovazione, homeSubtitleEnabled, homeSubtitleText, homeFollowTitle, homeFollowMessage, homeFormTitle, homeFormMessage, homeSuccessTitle, homeSuccessMessage, homeWaitingTitle, homeWaitingMessage, homeBookingsDisabledTitle, homeBookingsDisabledMessage, homeClosedTitle, homeClosedMessage, homeMaintenanceTitle, homeMaintenanceMessage, prossimaSerataData, winnerRevealCountdownDefaultSeconds, winnerRevealAnimationEnabled, winnerRevealAnimationMode o winnerRevealAutoStepSeconds.",
+          "Specifica almeno archivioPubblicoAbilitato, modalitaPostApprovazione, homeSubtitleEnabled, homeSubtitleText, homeFollowTitle, homeFollowMessage, homeFormTitle, homeFormMessage, homeSuccessTitle, homeSuccessMessage, homeWaitingTitle, homeWaitingMessage, homeBookingsDisabledTitle, homeBookingsDisabledMessage, homeClosedTitle, homeClosedMessage, homeMaintenanceTitle, homeMaintenanceMessage, prossimaSerataData, winnerRevealCountdownDefaultSeconds, winnerRevealAnimationEnabled, winnerRevealAnimationMode, gadgetEstrazioneAbilitata o winnerRevealAutoStepSeconds.",
         );
       }
       const updatedSettings = await updatePublicSettings(admin, updates);
@@ -2340,6 +2360,134 @@ async function executeAction(admin: ReturnType<typeof createClient>, action: str
         status: 200,
         data: { serateCreated, bookingsCreated, votesCreated },
       };
+    }
+
+    case "get_gadget_premi": {
+      const serataId = typeof body.serataId === "number" ? body.serataId : null;
+      const { data: premi, error: premiError } = await admin
+        .from("gadget_premi")
+        .select("*")
+        .order("ordine", { ascending: true })
+        .order("creato_il", { ascending: true });
+      if (premiError) throw new ApiError(500, "query_failed", "Errore nel caricamento dei premi.");
+
+      let estrazioni: Record<string, unknown>[] = [];
+      if (serataId && premi && premi.length > 0) {
+        const premiIds = premi.map((p) => p.id);
+        const { data: estratti } = await admin
+          .from("gadget_estrazioni")
+          .select("*, prenotazioni(id, nome, canzone, artista)")
+          .in("premio_id", premiIds)
+          .eq("serata_id", serataId);
+        estrazioni = estratti || [];
+      }
+      const estrazioniMap: Record<number, unknown> = {};
+      estrazioni.forEach((e) => { estrazioniMap[Number(e.premio_id)] = e; });
+      const result = (premi || []).map((p) => ({ ...p, estrazione: estrazioniMap[Number(p.id)] || null }));
+      return { status: 200, data: result };
+    }
+
+    case "add_gadget_premio": {
+      const nome = typeof body.nome === "string" ? body.nome.trim() : "";
+      const fotoUrl = typeof body.fotoUrl === "string" ? body.fotoUrl.trim() : null;
+      if (!nome) throw new ApiError(400, "invalid_payload", "Il nome del premio è obbligatorio.");
+      const { data: existing } = await admin.from("gadget_premi").select("ordine").order("ordine", { ascending: false }).limit(1).maybeSingle();
+      const nextOrdine = (Number(existing?.ordine) || 0) + 1;
+      const { data, error } = await admin
+        .from("gadget_premi")
+        .insert({ nome, foto_url: fotoUrl || null, ordine: nextOrdine })
+        .select("*")
+        .maybeSingle();
+      if (error || !data) throw new ApiError(500, "insert_failed", "Impossibile aggiungere il premio.");
+      return { status: 201, data };
+    }
+
+    case "delete_gadget_premio": {
+      const premioId = typeof body.premioId === "number" ? body.premioId : null;
+      if (!premioId) throw new ApiError(400, "invalid_payload", "premioId è obbligatorio.");
+      const { error } = await admin.from("gadget_premi").delete().eq("id", premioId);
+      if (error) throw new ApiError(500, "delete_failed", "Impossibile eliminare il premio.");
+      return { status: 200, data: { ok: true } };
+    }
+
+    case "mostra_gadget_premio": {
+      const premioId = typeof body.premioId === "number" ? body.premioId : null;
+      if (!premioId) throw new ApiError(400, "invalid_payload", "premioId è obbligatorio.");
+      const { data: premio, error: pError } = await admin
+        .from("gadget_premi").select("*").eq("id", premioId).maybeSingle();
+      if (pError || !premio) throw new ApiError(404, "not_found", "Premio non trovato.");
+      await setGadgetRevealPayload(admin, {
+        premio_id: premio.id,
+        nome: premio.nome,
+        foto_url: premio.foto_url || null,
+        vincitore: null,
+      });
+      return { status: 200, data: { ok: true } };
+    }
+
+    case "estrai_gadget_premio": {
+      const premioId = typeof body.premioId === "number" ? body.premioId : null;
+      const serataId = typeof body.serataId === "number" ? body.serataId : null;
+      if (!premioId) throw new ApiError(400, "invalid_payload", "premioId è obbligatorio.");
+      if (!serataId) throw new ApiError(400, "invalid_payload", "serataId è obbligatorio.");
+
+      // Check prize exists
+      const { data: premio, error: pError } = await admin
+        .from("gadget_premi").select("*").eq("id", premioId).maybeSingle();
+      if (pError || !premio) throw new ApiError(404, "not_found", "Premio non trovato.");
+
+      // Check not already extracted
+      const { data: existing } = await admin
+        .from("gadget_estrazioni").select("id").eq("premio_id", premioId).maybeSingle();
+      if (existing) throw new ApiError(409, "already_extracted", "Questo premio ha già un vincitore estratto.");
+
+      // Get already-extracted prenotazione IDs in this serata
+      const { data: alreadyExtracted } = await admin
+        .from("gadget_estrazioni").select("prenotazione_id").eq("serata_id", serataId);
+      const excludedIds = (alreadyExtracted || []).map((e) => Number(e.prenotazione_id));
+
+      // Get eligible: approvata=true, cantata=true, serata_id=serataId, not excluded
+      const { data: eligible, error: eligibleError } = await admin
+        .from("prenotazioni")
+        .select("id, nome, canzone, artista")
+        .eq("serata_id", serataId)
+        .eq("approvata", true)
+        .eq("cantata", true);
+      if (eligibleError) throw new ApiError(500, "query_failed", "Errore nel caricamento delle prenotazioni.");
+
+      const pool = (eligible || []).filter((p) => !excludedIds.includes(Number(p.id)));
+      if (!pool.length) throw new ApiError(409, "no_eligible", "Nessun partecipante disponibile per l'estrazione.");
+
+      const winner = pool[Math.floor(Math.random() * pool.length)];
+
+      // Insert extraction
+      const { error: insertError } = await admin
+        .from("gadget_estrazioni")
+        .insert({ premio_id: premioId, prenotazione_id: winner.id, serata_id: serataId });
+      if (insertError) throw new ApiError(500, "insert_failed", "Impossibile salvare l'estrazione.");
+
+      // Update reveal payload
+      await setGadgetRevealPayload(admin, {
+        premio_id: premio.id,
+        nome: premio.nome,
+        foto_url: premio.foto_url || null,
+        vincitore: { id: winner.id, nome: winner.nome, canzone: winner.canzone, artista: winner.artista },
+      });
+
+      return { status: 200, data: { premio, vincitore: winner } };
+    }
+
+    case "reset_gadget_estrazione": {
+      const premioId = typeof body.premioId === "number" ? body.premioId : null;
+      if (!premioId) throw new ApiError(400, "invalid_payload", "premioId è obbligatorio.");
+      const { error } = await admin.from("gadget_estrazioni").delete().eq("premio_id", premioId);
+      if (error) throw new ApiError(500, "delete_failed", "Impossibile resettare l'estrazione.");
+      return { status: 200, data: { ok: true } };
+    }
+
+    case "chiudi_gadget_reveal": {
+      await setGadgetRevealPayload(admin, null);
+      return { status: 200, data: { ok: true } };
     }
 
     default:
