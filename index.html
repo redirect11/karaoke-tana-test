@@ -1395,6 +1395,131 @@
     .nav-drawer a.active { border-left-color:#d4a017; color:#f0c94a; }
     .nav-drawer-sep { height:1px; background:rgba(255,255,255,0.07); margin:8px 20px; }
 
+    /* ── Ceres News Banner ─────────────────────────────────────────────────── */
+    .news-ceres-banner {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(140deg, #001808 0%, #003d1a 35%, #005430 65%, #006a38 100%);
+      border: 1.5px solid rgba(220,176,0,0.45);
+      border-radius: 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 32px rgba(0,84,48,0.45), 0 0 0 1px rgba(220,176,0,0.08);
+      animation: ncb-appear 0.5s ease both;
+    }
+    @keyframes ncb-appear {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .news-ceres-banner::before {
+      content: 'CERES';
+      position: absolute;
+      right: -10px; top: 50%;
+      transform: translateY(-50%) rotate(-90deg);
+      font-size: 4.5rem; font-weight: 900;
+      color: rgba(220,176,0,0.055);
+      letter-spacing: 0.28em;
+      pointer-events: none; user-select: none; white-space: nowrap;
+    }
+    .ncb-glow {
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse at 85% 40%, rgba(220,176,0,0.13) 0%, transparent 55%),
+        radial-gradient(ellipse at 15% 90%, rgba(0,180,80,0.1) 0%, transparent 50%);
+    }
+    @keyframes ncb-shimmer {
+      0%   { opacity: 0; transform: translateX(-100%) rotate(25deg); }
+      50%  { opacity: 1; }
+      100% { opacity: 0; transform: translateX(200%) rotate(25deg); }
+    }
+    .ncb-shimmer {
+      position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+    }
+    .ncb-shimmer::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: 0;
+      width: 40px; height: 300%;
+      background: linear-gradient(90deg, transparent, rgba(255,220,80,0.12), transparent);
+      animation: ncb-shimmer 3.5s ease-in-out 1s infinite;
+    }
+    .ncb-body {
+      position: relative; z-index: 1;
+      padding: 18px 16px 16px;
+    }
+    .ncb-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(220,176,0,0.16);
+      border: 1px solid rgba(220,176,0,0.38);
+      color: #f0d060;
+      font-size: 0.65rem; font-weight: 800;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 20px; margin-bottom: 10px;
+    }
+    .ncb-cols { display: flex; gap: 10px; align-items: flex-end; }
+    .ncb-text { flex: 1; min-width: 0; }
+    .ncb-brand {
+      font-size: 2rem; font-weight: 900;
+      letter-spacing: 0.24em; color: #f0c000; line-height: 1;
+      text-shadow: 0 0 28px rgba(240,192,0,0.45), 0 2px 0 rgba(0,0,0,0.5);
+      margin-bottom: 2px;
+    }
+    .ncb-title {
+      font-size: 1.05rem; font-weight: 800;
+      color: #fff; margin: 0 0 9px; line-height: 1.25;
+    }
+    .ncb-desc {
+      font-size: 0.82rem;
+      color: rgba(240,230,210,0.82);
+      margin: 0 0 11px; line-height: 1.45;
+    }
+    .ncb-desc strong { color: #f0d060; }
+    .ncb-prizes {
+      display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px;
+    }
+    .ncb-prizes span {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(220,176,0,0.28);
+      color: #f0d060; font-size: 0.72rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px;
+    }
+    .ncb-cta {
+      font-size: 0.76rem;
+      color: rgba(240,230,210,0.55);
+      margin: 0; font-style: italic;
+    }
+    .ncb-images {
+      position: relative; flex-shrink: 0;
+      width: 80px; height: 110px;
+    }
+    .ncb-bottle {
+      position: absolute; right: 0; bottom: -14px;
+      width: 68px;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.55));
+      transform: rotate(4deg);
+    }
+    .ncb-bottle-2 { display: none; }
+    @media (min-width: 380px) {
+      .ncb-images { width: 100px; height: 125px; }
+      .ncb-bottle { width: 80px; }
+    }
+    @media (min-width: 500px) {
+      .ncb-body { padding: 20px 20px 18px; }
+      .ncb-brand { font-size: 2.4rem; }
+      .ncb-title { font-size: 1.15rem; }
+      .ncb-images { width: 145px; height: 140px; }
+      .ncb-bottle {
+        right: 30px; bottom: -16px; width: 80px;
+        transform: rotate(2deg);
+      }
+      .ncb-bottle-2 {
+        display: block;
+        position: absolute; right: 0; bottom: -16px;
+        width: 66px;
+        filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5));
+        transform: rotate(10deg);
+      }
+    }
+
     /* ── Gadget Reveal Overlay ─────────────────────────────────────────────── */
     #gadget-reveal-overlay {
       display: none;
@@ -1637,6 +1762,46 @@
     <p id="home-subtitle" class="home-subtitle"></p>
     <p class="app-intro">Prenota la tua canzone, segui la coda in diretta, vota le esibizioni dal telefono ma, soprattutto, canta a squarciagola!. Karaoke ogni giovedì sera alla <a href="chi-siamo.html" style="color:inherit;text-decoration:underline;">Tana del Coniglio</a> di Nola.</p>
   </header>
+
+  <!-- ── News: Serata Ceres ── -->
+  <div class="news-ceres-banner" id="news-ceres-banner">
+    <div class="ncb-glow"></div>
+    <div class="ncb-shimmer"></div>
+    <div class="ncb-body">
+      <div class="ncb-badge">🍺 Evento speciale · Serata sponsorizzata</div>
+      <div class="ncb-cols">
+        <div class="ncb-text">
+          <div class="ncb-brand">CERES</div>
+          <h2 class="ncb-title">Karaoke Night<br>× Ceres</h2>
+          <p class="ncb-desc">
+            Una serata di karaoke <strong>sponsorizzata da Ceres</strong>!
+            Canta, vinci e brinda — gadget e premi Ceres in palio per tutti i partecipanti.
+            I premi vengono estratti a sorte durante la serata tra chi sale sul palco.
+          </p>
+          <div class="ncb-prizes">
+            <span>🎁 Gadget Ceres</span>
+            <span>🎮 Giochi a premi</span>
+            <span>🏆 Premi speciali</span>
+          </div>
+          <p class="ncb-cta">Sali sul palco e potresti vincere!</p>
+        </div>
+        <div class="ncb-images">
+          <img
+            src="https://www.kindpng.com/picc/m/50-505825_ceres-beer-png-png-download-ceres-birra-transparent.png"
+            alt="Bottiglia Ceres"
+            class="ncb-bottle"
+            loading="lazy"
+          />
+          <img
+            src="https://www.pngkey.com/png/detail/869-8690462_ceres-beer-png.png"
+            alt="Ceres Beer"
+            class="ncb-bottle-2"
+            loading="lazy"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
 
   <a href="vota.html" id="vota-banner">🗳 Vota le esibizioni! →</a>
   <!-- <div id="ads-banner-container" class="ads-banner-container" aria-live="polite"></div> -->
